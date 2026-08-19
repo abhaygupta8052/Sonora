@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useRef, useCallb
 import { Track, RepeatMode } from '../api/types';
 import { storage } from '../utils/storage';
 import { useLibrary } from './LibraryContext';
+import { resolvePlayable } from '../services/resolve';
 
 interface AudioPlayerContextType {
   currentTrack: Track | null;
@@ -150,8 +151,8 @@ export const AudioPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ c
     }
   }, [volume, isMuted]);
 
-  // Play audio source
-  const loadAndPlayTrack = useCallback((track: Track) => {
+  // Play audio source with Audio-Twin swap resolution
+  const loadAndPlayTrack = useCallback(async (track: Track) => {
     if (!audioRef.current || !track) return;
     const audio = audioRef.current;
 
@@ -160,8 +161,16 @@ export const AudioPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ c
     setCurrentTrack(track);
     addRecentlyPlayed(track);
 
-    if (track.streamUrl) {
-      audio.src = track.streamUrl;
+    // Resolve to high-fidelity audio twin if from YouTube
+    const resolvedTrack = await resolvePlayable(track);
+    if (resolvedTrack && resolvedTrack.id !== track.id) {
+      setCurrentTrack(resolvedTrack);
+    }
+
+    const streamUrl = resolvedTrack.streamUrl || track.streamUrl;
+
+    if (streamUrl) {
+      audio.src = streamUrl;
       audio.load();
       const playPromise = audio.play();
       if (playPromise !== undefined) {

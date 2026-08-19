@@ -1,6 +1,7 @@
 import CryptoJS from 'crypto-js';
 import { Track, Artist, Album, Playlist, SearchResults } from './types';
 import { FEATURED_TRACKS, CURATED_PLAYLISTS, FEATURED_ARTISTS } from './curatedData';
+import { ytMusicService } from '../services/ytmusic';
 
 const SAAVN_DIRECT_API = 'https://www.jiosaavn.com/api.php';
 const DES_KEY = '38346591'; // Standard JioSaavn media decryption key
@@ -147,7 +148,7 @@ function normalizeProxyTrack(item: any): Track {
 }
 
 export const musicApi = {
-  // Main Search across all languages: Bollywood, Hindi, Bhojpuri, Punjabi, English, etc.
+  // Main Search across all languages: Bollywood, Hindi, Bhojpuri, Punjabi, English, and YouTube Music
   async search(query: string): Promise<SearchResults> {
     if (!query || !query.trim()) {
       return { tracks: [], artists: [], albums: [], playlists: [] };
@@ -155,91 +156,119 @@ export const musicApi = {
 
     const trimmed = query.trim();
 
-    // 1. First try direct Official JioSaavn Search API
-    try {
-      const url = `${SAAVN_DIRECT_API}?__call=search.getResults&_format=json&p=1&n=25&q=${encodeURIComponent(trimmed)}`;
-      const res = await fetch(url, { signal: AbortSignal.timeout(6000) });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.results && Array.isArray(data.results) && data.results.length > 0) {
-          const tracks = data.results
-            .map(normalizeOfficialSong)
-            .filter((t: Track) => !!t.streamUrl);
+    // 1. Fetch JioSaavn primary and YouTube Music discovery in parallel
+    const [saavnResults, ytTracks] = await Promise.all([
+      (async (): Promise<{ tracks: Track[]; artists: Artist[]; albums: Album[]; playlists: Playlist[] }> => {
+        try {
+          const url = `${SAAVN_DIRECT_API}?__call=search.getResults&_format=json&p=1&n=25&q=${encodeURIComponent(trimmed)}`;
+          const res = await fetch(url, { signal: AbortSignal.timeout(6000) });
+          if (res.ok) {
+            const data = await res.json();
+            if (data.results && Array.isArray(data.results) && data.results.length > 0) {
+              const tracks = data.results
+                .map(normalizeOfficialSong)
+                .filter((t: Track) => !!t.streamUrl);
 
-          if (tracks.length > 0) {
-            // Also fetch autocomplete artists and albums in parallel
-            const autoRes = await fetch(`${SAAVN_DIRECT_API}?__call=autocomplete.get&_format=json&_marker=0&cc=in&includeMetaTags=1&query=${encodeURIComponent(trimmed)}`, { signal: AbortSignal.timeout(4000) }).catch(() => null);
-            let artists: Artist[] = [];
-            let albums: Album[] = [];
-            let playlists: Playlist[] = [];
+              if (tracks.length > 0) {
+                // Fetch autocomplete artists and albums
+                const autoRes = await fetch(`${SAAVN_DIRECT_API}?__call=autocomplete.get&_format=json&_marker=0&cc=in&includeMetaTags=1&query=${encodeURIComponent(trimmed)}`, { signal: AbortSignal.timeout(4000) }).catch(() => null);
+                let artists: Artist[] = [];
+                let albums: Album[] = [];
+                let playlists: Playlist[] = [];
 
-            if (autoRes && autoRes.ok) {
-              const autoData = await autoRes.json().catch(() => null);
-              if (autoData?.artists?.data) {
-                artists = autoData.artists.data.map((a: any) => ({
-                  id: a.id || a.title,
-                  name: decodeHtml(a.title || a.name),
-                  image: (a.image || '').replace('50x50', '500x500'),
-                  followerCount: 150000,
-                  monthlyListeners: '2.5M',
-                  genres: ['Bollywood', 'Popular'],
-                  topTracks: [],
-                  albums: []
-                }));
-              }
-              if (autoData?.albums?.data) {
-                albums = autoData.albums.data.map((al: any) => ({
-                  id: al.id,
-                  title: decodeHtml(al.title),
-                  artist: decodeHtml(al.music || al.artist || 'Various Artists'),
-                  artwork: (al.image || '').replace('50x50', '500x500'),
-                  releaseYear: al.year || '2024',
-                  trackCount: 5,
-                  tracks: []
-                }));
-              }
-              if (autoData?.playlists?.data) {
-                playlists = autoData.playlists.data.map((p: any) => ({
-                  id: p.id,
-                  title: decodeHtml(p.title),
-                  description: 'Curated Playlist',
-                  artwork: (p.image || '').replace('50x50', '500x500'),
-                  trackCount: 10,
-                  tracks: []
-                }));
+                if (autoRes && autoRes.ok) {
+                  const autoData = await autoRes.json().catch(() => null);
+                  if (autoData?.artists?.data) {
+                    artists = autoData.artists.data.map((a: any) => ({
+                      id: a.id || a.title,
+                      name: decodeHtml(a.title || a.name),
+                      image: (a.image || '').replace('50x50', '500x500'),
+                      followerCount: 150000,
+                      monthlyListeners: '2.5M',
+                      genres: ['Bollywood', 'Popular'],
+                      topTracks: [],
+                      albums: []
+                    }));
+                  }
+                  if (autoData?.albums?.data) {
+                    albums = autoData.albums.data.map((al: any) => ({
+                      id: al.id,
+                      title: decodeHtml(al.title),
+                      artist: decodeHtml(al.music || al.artist || 'Various Artists'),
+                      artwork: (al.image || '').replace('50x50', '500x500'),
+                      releaseYear: al.year || '2024',
+                      trackCount: 5,
+                      tracks: []
+                    }));
+                  }
+                  if (autoData?.playlists?.data) {
+                    playlists = autoData.playlists.data.map((p: any) => ({
+                      id: p.id,
+                      title: decodeHtml(p.title),
+                      description: 'Curated Playlist',
+                      artwork: (p.image || '').replace('50x50', '500x500'),
+                      trackCount: 10,
+                      tracks: []
+                    }));
+                  }
+                }
+
+                return { tracks, artists, albums, playlists };
               }
             }
-
-            return { tracks, artists, albums, playlists };
           }
+        } catch (e) {
+          console.warn('Direct Saavn search failed, trying backup...', e);
         }
-      }
-    } catch (e) {
-      console.warn('Direct Saavn search failed, trying proxy mirror...', e);
-    }
 
-    // 2. Try proxy endpoints (saavn-api-eight / sumit endpoints)
-    for (const endpoint of BACKUP_ENDPOINTS) {
-      try {
-        const res = await fetch(`${endpoint}/search/songs?query=${encodeURIComponent(trimmed)}&limit=25`, {
-          signal: AbortSignal.timeout(5000)
-        });
-        if (res.ok) {
-          const data = await res.json();
-          const resultsList = data?.data?.results || data?.results || [];
-          if (Array.isArray(resultsList) && resultsList.length > 0) {
-            const tracks = resultsList.map(normalizeProxyTrack).filter((t: Track) => !!t.streamUrl);
-            if (tracks.length > 0) {
-              return { tracks, artists: [], albums: [], playlists: [] };
+        // Backup mirror search
+        for (const endpoint of BACKUP_ENDPOINTS) {
+          try {
+            const res = await fetch(`${endpoint}/search/songs?query=${encodeURIComponent(trimmed)}&limit=25`, {
+              signal: AbortSignal.timeout(4000)
+            });
+            if (res.ok) {
+              const data = await res.json();
+              const resultsList = data?.data?.results || data?.results || [];
+              if (Array.isArray(resultsList) && resultsList.length > 0) {
+                const tracks = resultsList.map(normalizeProxyTrack).filter((t: Track) => !!t.streamUrl);
+                if (tracks.length > 0) {
+                  return { tracks, artists: [], albums: [], playlists: [] };
+                }
+              }
             }
+          } catch {
+            // continue
           }
         }
-      } catch (err) {
-        // Try next mirror
+
+        return { tracks: [], artists: [], albums: [], playlists: [] };
+      })(),
+      ytMusicService.search(trimmed).catch(() => [] as Track[])
+    ]);
+
+    // Merge primary tracks and YouTube Music discovery tracks (deduped by title similarity)
+    const combinedTracks: Track[] = [...saavnResults.tracks];
+    const seenTitles = new Set(saavnResults.tracks.map((t) => t.title.toLowerCase().trim()));
+
+    ytTracks.forEach((ytTrack) => {
+      const lower = ytTrack.title.toLowerCase().trim();
+      if (!seenTitles.has(lower)) {
+        seenTitles.add(lower);
+        combinedTracks.push(ytTrack);
       }
+    });
+
+    if (combinedTracks.length > 0) {
+      return {
+        tracks: combinedTracks,
+        artists: saavnResults.artists.length > 0 ? saavnResults.artists : FEATURED_ARTISTS,
+        albums: saavnResults.albums,
+        playlists: saavnResults.playlists.length > 0 ? saavnResults.playlists : CURATED_PLAYLISTS
+      };
     }
 
-    // 3. Fallback to curated set
+    // Fallback to curated set
     const qLower = trimmed.toLowerCase();
     const fallbackTracks = FEATURED_TRACKS.filter(t =>
       t.title.toLowerCase().includes(qLower) ||
@@ -306,7 +335,6 @@ export const musicApi = {
     if (local) return local;
 
     try {
-      // Search artist songs directly
       const songs = await this.getTrending(id);
       return {
         id,
