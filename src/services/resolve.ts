@@ -45,33 +45,39 @@ function normalize(str: string): string {
 
 /**
  * Resolves a track to its direct 320kbps audio twin from the primary JioSaavn catalog
- * if it originated from YouTube Music discovery.
+ * if it originated from YouTube Music or iTunes discovery without direct full audio stream.
  */
 export async function resolvePlayable(track: Track): Promise<Track> {
+  const needsResolution =
+    track.source === 'youtube' ||
+    track.source === 'itunes' ||
+    !track.streamUrl ||
+    track.streamUrl.includes('audio-preview') ||
+    track.streamUrl.includes('youtube');
+
   // If track already has direct audio stream (from JioSaavn / direct CDN), return it
-  if (track.source !== 'youtube' && track.streamUrl && !track.streamUrl.includes('youtube')) {
+  if (!needsResolution && track.streamUrl) {
     return track;
   }
 
   const cache = getMatchCache();
   if (cache[track.id] !== undefined) {
     const cachedMatch = cache[track.id];
-    if (cachedMatch) return cachedMatch;
-    return track;
+    if (cachedMatch && cachedMatch.streamUrl) return cachedMatch;
   }
 
   try {
-    // 2500ms budget to lookup audio-twin
     const lookupPromise = (async () => {
       const searchTarget = `${track.title} ${track.artist}`.trim();
-      const results = await musicApi.search(searchTarget);
+      const results = await musicApi.getTrending(searchTarget);
 
-      if (results.tracks && results.tracks.length > 0) {
+      if (results && results.length > 0) {
         const normTargetTitle = normalize(track.title);
         const normTargetArtist = normalize(track.artist);
 
         // Find candidate with high confidence match
-        const bestCandidate = results.tracks.find((candidate) => {
+        const bestCandidate = results.find((candidate) => {
+          if (!candidate.streamUrl) return false;
           const normCandTitle = normalize(candidate.title);
           const normCandArtist = normalize(candidate.artist);
 
@@ -83,24 +89,27 @@ export async function resolvePlayable(track: Track): Promise<Track> {
             normTargetArtist.split(' ').some((word) => word.length > 3 && normCandArtist.includes(word));
 
           return titleMatch || (titleMatch && artistMatch);
-        });
+        }) || results[0];
 
         if (bestCandidate && bestCandidate.streamUrl) {
-          cache[track.id] = bestCandidate;
+          const resolved: Track = {
+            ...track,
+            streamUrl: bestCandidate.streamUrl,
+            duration: bestCandidate.duration || track.duration,
+            artwork: track.artwork || bestCandidate.artwork
+          };
+          cache[track.id] = resolved;
           saveMatchCache(cache);
-          return bestCandidate;
+          return resolved;
         }
       }
 
-      // Memoize "looked, found nothing"
-      cache[track.id] = null;
-      saveMatchCache(cache);
       return track;
     })();
 
-    // Apply 2500ms timeout
+    // Apply 3000ms timeout
     const timeoutPromise = new Promise<Track>((res) =>
-      setTimeout(() => res(track), 2500)
+      setTimeout(() => res(track), 3000)
     );
 
     return await Promise.race([lookupPromise, timeoutPromise]);

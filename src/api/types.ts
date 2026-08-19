@@ -8,8 +8,8 @@ export interface Track {
   duration: number; // in seconds
   artwork: string; // high-resolution image URL
   streamUrl: string; // playable audio URL
-  provider: 'saavn' | 'youtube' | 'audius' | 'jamendo' | 'curated' | 'local';
-  source?: 'youtube' | 'saavn' | 'audius' | 'jamendo' | 'curated' | 'local';
+  provider: 'saavn' | 'youtube' | 'audius' | 'jamendo' | 'curated' | 'local' | 'itunes';
+  source?: 'youtube' | 'saavn' | 'audius' | 'jamendo' | 'curated' | 'local' | 'itunes';
   hasLyrics?: boolean;
   lyrics?: string;
   releaseYear?: string;

@@ -4,10 +4,8 @@ import { FEATURED_TRACKS, CURATED_PLAYLISTS, FEATURED_ARTISTS } from './curatedD
 import { ytMusicService } from '../services/ytmusic';
 
 // ─── API Endpoints ──────────────────────────────────────────────────────────
-// Use our own Vercel serverless proxy to avoid CORS on production.
-// Falls back to public community mirrors if /api/saavn is not available (e.g. local dev).
-const SAAVN_PROXY = '/api/saavn';        // Vercel serverless function (no CORS)
-const DES_KEY = '38346591';             // Standard JioSaavn media decryption key
+const SAAVN_PROXY = '/api/saavn'; // Vercel serverless function (no CORS)
+const DES_KEY = '38346591'; // Standard JioSaavn media decryption key
 
 // Community-hosted Saavn REST mirrors (fallback)
 const BACKUP_ENDPOINTS = [
@@ -23,7 +21,6 @@ function safeString(value: unknown): string {
   if (!value) return '';
   if (typeof value === 'string') return value;
   if (Array.isArray(value)) {
-    // e.g. primary_artists is sometimes [{id, name, role}, ...]
     return value.map((v: any) => v?.name || v?.title || String(v)).filter(Boolean).join(', ');
   }
   if (typeof value === 'object') {
@@ -49,21 +46,18 @@ function decodeHtml(html: string): string {
 
 /**
  * Generate a normalized deduplication key for a track.
- * Strips movie descriptors like (From "Movie"), (Audio), (Official Video), punctuation, and casing.
  */
 export function getSongDedupKey(track: Track): string {
   if (!track || !track.title) return '';
 
-  // 1. Clean title: remove descriptors in brackets
   const cleanTitle = track.title
     .toLowerCase()
     .replace(/\((from|video|audio|official|lyrics|hd|4k|remix|slowed|reverb|full song|original)[^)]*\)/gi, '')
     .replace(/\[(from|video|audio|official|lyrics|hd|4k|remix|slowed|reverb|full song|original)[^\]]*\]/gi, '')
-    .replace(/[^\w\s\u0900-\u097F]/g, '') // keep letters, numbers, devanagari hindi letters
+    .replace(/[^\w\s\u0900-\u097F]/g, '')
     .replace(/\s+/g, ' ')
     .trim();
 
-  // 2. Clean artist: extract primary artist
   const cleanArtist = (track.artist || '')
     .toLowerCase()
     .split(',')[0]
@@ -77,10 +71,6 @@ export function getSongDedupKey(track: Track): string {
 
 /**
  * Deduplicates an array of tracks.
- * When duplicates are encountered (same normalized title + artist), gives priority to:
- * 1. Official JioSaavn 320kbps streams over YouTube
- * 2. Higher resolution artwork
- * 3. Valid duration metadata
  */
 export function deduplicateTracks(tracks: Track[]): Track[] {
   if (!Array.isArray(tracks) || tracks.length === 0) return [];
@@ -90,9 +80,8 @@ export function deduplicateTracks(tracks: Track[]): Track[] {
   const orderedKeys: string[] = [];
 
   for (const track of tracks) {
-    if (!track || !track.title || !track.streamUrl) continue;
+    if (!track || !track.title) continue;
 
-    // Check exact ID duplicate first
     if (seenIds.has(track.id)) continue;
     seenIds.add(track.id);
 
@@ -107,20 +96,21 @@ export function deduplicateTracks(tracks: Track[]): Track[] {
       keyMap.set(key, track);
       orderedKeys.push(key);
     } else {
-      // Duplicate found! Prioritize higher quality track
       const existing = keyMap.get(key)!;
       const existingScore =
         (existing.provider === 'saavn' ? 10 : 0) +
         (existing.artwork && !existing.artwork.includes('unsplash') ? 5 : 0) +
-        (existing.duration > 0 ? 2 : 0);
+        (existing.duration > 0 ? 2 : 0) +
+        (existing.streamUrl && !existing.streamUrl.includes('preview') ? 10 : 0);
 
       const newScore =
         (track.provider === 'saavn' ? 10 : 0) +
         (track.artwork && !track.artwork.includes('unsplash') ? 5 : 0) +
-        (track.duration > 0 ? 2 : 0);
+        (track.duration > 0 ? 2 : 0) +
+        (track.streamUrl && !track.streamUrl.includes('preview') ? 10 : 0);
 
       if (newScore > existingScore) {
-        keyMap.set(key, track); // Replace with higher priority version
+        keyMap.set(key, track);
       }
     }
   }
@@ -171,7 +161,7 @@ function normalizeOfficialSong(item: any): Track {
     }
   }
 
-  // Artwork — upgrade resolution
+  // Artwork
   let rawImage: any = item.image || moreInfo.image || item.artwork || '';
   if (typeof rawImage === 'string') {
     rawImage = rawImage.replace('150x150', '500x500').replace('50x50', '500x500');
@@ -182,7 +172,7 @@ function normalizeOfficialSong(item: any): Track {
   }
   const artwork = rawImage || 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=600&auto=format&fit=crop&q=80';
 
-  // Artist — always a plain string (fixes React error #31)
+  // Artist
   const rawArtist =
     item.primary_artists ??
     moreInfo.primary_artists ??
@@ -257,6 +247,41 @@ function normalizeProxyTrack(item: any): Track {
     releaseYear: safeString(item.year || item.releaseDate?.substring(0, 4) || '2024'),
     genre: safeString(item.language || 'Music'),
   };
+}
+
+// ─── iTunes Global Fallback Discovery ────────────────────────────────────────
+
+async function searchItunes(query: string): Promise<Track[]> {
+  try {
+    const url = `https://itunes.apple.com/search?term=${encodeURIComponent(query)}&media=music&entity=song&limit=30`;
+    const res = await fetch(url, { signal: AbortSignal.timeout(5000) });
+    if (res.ok) {
+      const data = await res.json();
+      if (Array.isArray(data.results) && data.results.length > 0) {
+        return data.results.map((item: any): Track => {
+          const artwork = (item.artworkUrl100 || '').replace('100x100bb', '600x600bb');
+          return {
+            id: `itunes_${item.trackId}`,
+            title: decodeHtml(safeString(item.trackName || item.collectionName || 'Song')),
+            artist: decodeHtml(safeString(item.artistName || 'Unknown Artist')),
+            artistId: safeString(item.artistId),
+            album: decodeHtml(safeString(item.collectionName || 'Single')),
+            albumId: safeString(item.collectionId),
+            duration: Math.round((item.trackTimeMillis || 180000) / 1000),
+            artwork: artwork || 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=600&auto=format&fit=crop&q=80',
+            streamUrl: item.previewUrl || '',
+            provider: 'saavn',
+            source: 'itunes',
+            releaseYear: safeString(item.releaseDate ? item.releaseDate.substring(0, 4) : '2024'),
+            genre: safeString(item.primaryGenreName || 'Music'),
+          };
+        });
+      }
+    }
+  } catch (e) {
+    console.warn('iTunes fallback search failed', e);
+  }
+  return [];
 }
 
 // ─── Core JioSaavn search via proxy ─────────────────────────────────────────
@@ -335,7 +360,7 @@ async function searchSaavn(trimmed: string): Promise<{ tracks: Track[]; artists:
         const data = await res.json();
         const resultsList = data?.data?.results || data?.results || [];
         if (Array.isArray(resultsList) && resultsList.length > 0) {
-          const rawTracks = resultsList.map(normalizeProxyTrack).filter((t: Track) => !!t.streamUrl);
+          const rawTracks = resultsList.map(normalizeProxyTrack);
           const tracks = deduplicateTracks(rawTracks);
           if (tracks.length > 0) return { tracks, artists: [], albums: [], playlists: [] };
         }
@@ -357,8 +382,9 @@ async function trendingSaavn(query: string): Promise<Track[]> {
     const res = await fetch(`${SAAVN_PROXY}${params}`, { signal: AbortSignal.timeout(6000) });
     if (res.ok) {
       const data = await res.json();
-      if (data.results && Array.isArray(data.results)) {
-        const rawTracks = data.results.map(normalizeOfficialSong).filter((t: Track) => !!t.streamUrl);
+      const resultsList = data.results || data.data?.results || data.songs?.data || [];
+      if (Array.isArray(resultsList) && resultsList.length > 0) {
+        const rawTracks = resultsList.map(normalizeOfficialSong);
         const tracks = deduplicateTracks(rawTracks);
         if (tracks.length > 0) return tracks;
       }
@@ -376,7 +402,7 @@ async function trendingSaavn(query: string): Promise<Track[]> {
       if (res.ok) {
         const data = await res.json();
         const list = data?.data?.results || data?.results || [];
-        const rawTracks = list.map(normalizeProxyTrack).filter((t: Track) => !!t.streamUrl);
+        const rawTracks = list.map(normalizeProxyTrack);
         const tracks = deduplicateTracks(rawTracks);
         if (tracks.length > 0) return tracks;
       }
@@ -388,105 +414,87 @@ async function trendingSaavn(query: string): Promise<Track[]> {
 
 /**
  * Fetch all songs by a specific artist name — fetches multiple pages to get more results.
- * Used by ArtistPage to build a complete song list.
  */
 async function fetchAllArtistSongs(artistName: string): Promise<Track[]> {
   const allTracks: Track[] = [];
 
-  // Fetch 3 pages from proxy in parallel for speed
   try {
     const pagePromises = [1, 2, 3].map(async (page) => {
       const params = `?__call=search.getResults&_format=json&p=${page}&n=25&q=${encodeURIComponent(artistName)}`;
       const res = await fetch(`${SAAVN_PROXY}${params}`, { signal: AbortSignal.timeout(7000) });
       if (res.ok) {
         const data = await res.json();
-        if (data.results && Array.isArray(data.results)) {
-          return data.results.map(normalizeOfficialSong).filter((t: Track) => !!t.streamUrl);
+        const resultsList = data.results || data.data?.results || data.songs?.data || [];
+        if (Array.isArray(resultsList)) {
+          return resultsList.map(normalizeOfficialSong);
         }
       }
-      return [] as Track[];
+      return [];
     });
-    const pages = await Promise.allSettled(pagePromises);
-    for (const p of pages) {
-      if (p.status === 'fulfilled') {
-        allTracks.push(...p.value);
-      }
-    }
-    const deduped = deduplicateTracks(allTracks);
-    if (deduped.length > 0) return deduped;
+
+    const results = await Promise.all(pagePromises);
+    results.forEach((tracks) => allTracks.push(...tracks));
   } catch (e) {
-    console.warn('Multi-page artist search failed, trying mirrors...', e);
+    console.warn('Proxy artist songs fetch failed, trying mirrors...', e);
   }
 
-  // Fallback: community mirrors with higher limit
-  for (const endpoint of BACKUP_ENDPOINTS) {
-    try {
-      const res = await fetch(`${endpoint}/search/songs?query=${encodeURIComponent(artistName)}&limit=50`, {
-        signal: AbortSignal.timeout(6000),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        const list = data?.data?.results || data?.results || [];
-        const rawTracks = list.map(normalizeProxyTrack).filter((t: Track) => !!t.streamUrl);
-        const deduped = deduplicateTracks(rawTracks);
-        if (deduped.length > 0) return deduped;
-      }
-    } catch { /* next */ }
+  if (allTracks.length === 0) {
+    for (const endpoint of BACKUP_ENDPOINTS) {
+      try {
+        const res = await fetch(`${endpoint}/search/songs?query=${encodeURIComponent(artistName)}&limit=30`, {
+          signal: AbortSignal.timeout(6000),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          const list = data?.data?.results || data?.results || [];
+          if (Array.isArray(list) && list.length > 0) {
+            allTracks.push(...list.map(normalizeProxyTrack));
+            break;
+          }
+        }
+      } catch { /* try next */ }
+    }
   }
 
-  return [];
+  if (allTracks.length === 0) {
+    const itunesTracks = await searchItunes(artistName);
+    allTracks.push(...itunesTracks);
+  }
+
+  return deduplicateTracks(allTracks);
 }
 
 /**
- * Fetch real artist image from JioSaavn artist search API.
- * Returns high-res Saavn CDN image URL or null.
+ * Try to get a high-quality real artist image from JioSaavn artist autocomplete
  */
 async function fetchArtistRealImage(artistName: string): Promise<string | null> {
-  // 1. JioSaavn artist search (official artist photo from Saavn CDN)
   try {
-    const params = `?__call=search.getArtistResults&_format=json&n=5&q=${encodeURIComponent(artistName)}`;
-    const res = await fetch(`${SAAVN_PROXY}${params}`, { signal: AbortSignal.timeout(5000) });
+    const params = `?__call=autocomplete.get&_format=json&_marker=0&cc=in&includeMetaTags=1&query=${encodeURIComponent(artistName)}`;
+    const res = await fetch(`${SAAVN_PROXY}${params}`, { signal: AbortSignal.timeout(4000) });
     if (res.ok) {
       const data = await res.json();
-      const results: any[] = data?.results || data?.data || [];
-      for (const r of results) {
-        const name: string = safeString(r?.title || r?.name || '');
-        if (name.toLowerCase().includes(artistName.toLowerCase().split(' ')[0])) {
-          const img = safeString(r?.image || r?.picture || '');
-          if (img) return img.replace('50x50', '500x500').replace('150x150', '500x500');
+      const artists = data?.artists?.data;
+      if (Array.isArray(artists) && artists.length > 0) {
+        const exact = artists.find(
+          (a: any) =>
+            a.name?.toLowerCase().includes(artistName.toLowerCase()) ||
+            a.title?.toLowerCase().includes(artistName.toLowerCase()) ||
+            artistName.toLowerCase().includes(a.name?.toLowerCase() || '')
+        );
+        const match = exact || artists[0];
+        if (match?.image) {
+          const img = (match.image as string).replace('50x50', '500x500').replace('150x150', '500x500');
+          if (img && !img.includes('default') && !img.includes('artist-default')) {
+            return img;
+          }
         }
       }
     }
-  } catch { /* ignore */ }
-
-  // 2. Community mirror artist search
-  for (const endpoint of BACKUP_ENDPOINTS) {
-    try {
-      const res = await fetch(`${endpoint}/search/artists?query=${encodeURIComponent(artistName)}&limit=3`, {
-        signal: AbortSignal.timeout(4000),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        const list: any[] = data?.data?.results || data?.results || [];
-        if (list.length > 0) {
-          const img = safeString(
-            list[0]?.image?.[2]?.link ||
-            list[0]?.image?.[1]?.link ||
-            list[0]?.image?.[0]?.link ||
-            list[0]?.image || ''
-          );
-          if (img) return img;
-        }
-      }
-    } catch { /* next */ }
-  }
+  } catch { /* non-critical */ }
 
   return null;
 }
 
-/**
- * Extract artist image from the first song whose artist matches the search name.
- */
 function extractArtistImageFromSongs(songs: Track[], artistName: string): string | null {
   const firstName = artistName.toLowerCase().split(' ')[0];
   for (const s of songs) {
@@ -497,33 +505,74 @@ function extractArtistImageFromSongs(songs: Track[], artistName: string): string
   return null;
 }
 
+function extractArtistsFromTracks(tracks: Track[]): Artist[] {
+  const artistMap = new Map<string, { name: string; image: string; songCount: number }>();
+
+  for (const t of tracks) {
+    if (!t.artist) continue;
+    const names = t.artist.split(/[,&/|]/).map((n) => n.trim()).filter((n) => n.length > 1);
+    for (const name of names) {
+      if (!artistMap.has(name)) {
+        artistMap.set(name, {
+          name,
+          image: t.artwork || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&size=400&background=7c3aed&color=fff&bold=true`,
+          songCount: 1,
+        });
+      } else {
+        const item = artistMap.get(name)!;
+        item.songCount += 1;
+      }
+    }
+  }
+
+  return Array.from(artistMap.values()).slice(0, 10).map((a): Artist => ({
+    id: a.name,
+    name: a.name,
+    image: a.image,
+    followerCount: 200000 + a.songCount * 15000,
+    monthlyListeners: `${(1.2 + a.songCount * 0.3).toFixed(1)}M`,
+    genres: ['Bollywood', 'Popular'],
+    topTracks: [],
+    albums: [],
+  }));
+}
+
 // ─── Public API ──────────────────────────────────────────────────────────────
 
 export const musicApi = {
   /**
-   * Search across JioSaavn + YouTube Music (as fallback).
-   * - Primary: JioSaavn proxy + community mirrors (deduplicated)
-   * - Fallback: YouTube Music discovery (Piped/Invidious)
-   * - Final fallback: curated static data
+   * Search across JioSaavn + iTunes + YouTube Music in parallel.
    */
   async search(query: string): Promise<SearchResults> {
     if (!query?.trim()) return { tracks: [], artists: [], albums: [], playlists: [] };
     const trimmed = query.trim();
 
-    // Run JioSaavn + YouTube Music discovery in parallel
-    const [saavnResult, ytTracks] = await Promise.all([
+    // Run JioSaavn, iTunes, and YouTube Music discovery in parallel
+    const [saavnResult, itunesTracks, ytTracks] = await Promise.all([
       searchSaavn(trimmed),
+      searchItunes(trimmed),
       ytMusicService.search(trimmed).catch(() => [] as Track[]),
     ]);
 
-    // Merge: JioSaavn first, YouTube fills gaps, then apply deduplication
-    const rawCombined: Track[] = [...saavnResult.tracks, ...ytTracks];
+    // Merge tracks: JioSaavn + iTunes + YouTube Music
+    const rawCombined: Track[] = [...saavnResult.tracks, ...itunesTracks, ...ytTracks];
     const combined = deduplicateTracks(rawCombined);
+
+    // Collect artists
+    const combinedArtists: Artist[] = [...saavnResult.artists];
+    if (combinedArtists.length < 3 && combined.length > 0) {
+      const derived = extractArtistsFromTracks(combined);
+      for (const d of derived) {
+        if (!combinedArtists.some((a) => a.name.toLowerCase() === d.name.toLowerCase())) {
+          combinedArtists.push(d);
+        }
+      }
+    }
 
     if (combined.length > 0) {
       return {
         tracks: combined,
-        artists: saavnResult.artists.length > 0 ? saavnResult.artists : FEATURED_ARTISTS.slice(0, 5),
+        artists: combinedArtists.length > 0 ? combinedArtists : FEATURED_ARTISTS.slice(0, 6),
         albums: saavnResult.albums,
         playlists: saavnResult.playlists.length > 0 ? saavnResult.playlists : CURATED_PLAYLISTS,
       };
@@ -547,11 +596,12 @@ export const musicApi = {
 
   /** Get trending songs by genre/language query */
   async getTrending(query = 'Top Bollywood Hindi Hits 2024'): Promise<Track[]> {
-    // Try JioSaavn first, YouTube as fallback
     const saavnTracks = await trendingSaavn(query);
     if (saavnTracks.length > 0) return deduplicateTracks(saavnTracks);
 
-    // YouTube Music fallback for trending
+    const itunesTracks = await searchItunes(query);
+    if (itunesTracks.length > 0) return deduplicateTracks(itunesTracks);
+
     try {
       const ytTracks = await ytMusicService.search(query);
       if (ytTracks.length > 0) return deduplicateTracks(ytTracks);
@@ -570,12 +620,10 @@ export const musicApi = {
 
   async getArtistDetails(id: string): Promise<Artist | null> {
     const artistName = decodeURIComponent(id).trim();
-    // Check local curated first (for bio, genres etc)
     const local = FEATURED_ARTISTS.find(
       (a) => a.id === artistName || a.name.toLowerCase() === artistName.toLowerCase()
     );
 
-    // Fetch songs (multi-page) + real artist image in parallel
     const [rawSongs, realImage] = await Promise.all([
       fetchAllArtistSongs(artistName),
       fetchArtistRealImage(artistName),
@@ -583,7 +631,6 @@ export const musicApi = {
 
     const songs = deduplicateTracks(rawSongs);
 
-    // Best image: real API image > local curated > song artwork fallback > avatar API
     const artistImage =
       realImage ||
       local?.image ||
@@ -603,7 +650,6 @@ export const musicApi = {
     };
   },
 
-  /** Public method to get all songs by artist name (multi-page) */
   async getArtistSongs(artistName: string): Promise<Track[]> {
     const songs = await fetchAllArtistSongs(artistName);
     return deduplicateTracks(songs);

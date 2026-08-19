@@ -23,11 +23,12 @@ function fetchUrl(url: string): Promise<string> {
       url,
       {
         headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/124.0 Safari/537.36',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
           Accept: 'application/json, text/plain, */*',
           Referer: 'https://www.jiosaavn.com/',
           Origin: 'https://www.jiosaavn.com',
-          'Accept-Language': 'en-US,en;q=0.9',
+          'Accept-Language': 'en-US,en;q=0.9,hi;q=0.8',
+          Cookie: 'L=hindi%2Cpunjabi%2Cbhojpuri%2Cenglish; gdpr_acceptance=true; DL=english',
         },
       },
       (res) => {
@@ -58,6 +59,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Build query string from forwarded params
   const params = new URLSearchParams();
   params.set('_format', 'json');
+  params.set('_marker', '0');
+  params.set('api_version', '4');
+  params.set('ctx', 'web6dot0');
 
   for (const [key, value] of Object.entries(req.query)) {
     if (typeof value === 'string') {
@@ -74,12 +78,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     const body = await fetchUrl(targetUrl);
-    // Attempt to parse and re-serialize for clean JSON
     try {
       const json = JSON.parse(body);
       return res.status(200).json(json);
     } catch {
-      // Return raw string if not JSON
       res.setHeader('Content-Type', 'text/plain');
       return res.status(200).send(body);
     }
