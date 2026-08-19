@@ -78,65 +78,53 @@ export const FEATURED_TRACKS: Track[] = [
     artist: 'Vektor Pulse',
     album: 'Digital Odyssey',
     duration: 218,
-    artwork: 'https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=600&auto=format&fit=crop&q=80',
-    streamUrl: 'https://cdn.pixabay.com/download/audio/2022/03/15/audio_c8c8a73467.mp3?filename=synthwave-80s-110045.mp3',
+    artwork: 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=600&auto=format&fit=crop&q=80',
+    streamUrl: 'https://cdn.pixabay.com/download/audio/2022/03/10/audio_c8c8a73467.mp3?filename=electronic-future-beats-117997.mp3',
     provider: 'curated',
-    genre: 'Synthwave',
+    genre: 'EDM',
     releaseYear: '2024'
   },
   {
     id: 'curated-3',
-    title: 'Golden Sunset Echoes',
-    artist: 'Solara',
-    album: 'Summer Drift',
-    duration: 165,
-    artwork: 'https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?w=600&auto=format&fit=crop&q=80',
-    streamUrl: 'https://cdn.pixabay.com/download/audio/2022/10/14/audio_9939f792cb.mp3?filename=chill-abstract-intention-12099.mp3',
+    title: 'Acoustic Sunrise',
+    artist: 'River Soul',
+    album: 'Morning Light',
+    duration: 176,
+    artwork: 'https://images.unsplash.com/photo-1510915361894-db8b60106cb1?w=600&auto=format&fit=crop&q=80',
+    streamUrl: 'https://cdn.pixabay.com/download/audio/2022/11/22/audio_febc508520.mp3?filename=acoustic-breeze-109228.mp3',
     provider: 'curated',
-    genre: 'Chillhop',
-    releaseYear: '2024'
-  },
-  {
-    id: 'curated-4',
-    title: 'Starlight Melodies',
-    artist: 'Luna Eclipse',
-    album: 'Cosmic Journey',
-    duration: 182,
-    artwork: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=600&auto=format&fit=crop&q=80',
-    streamUrl: 'https://cdn.pixabay.com/download/audio/2022/01/18/audio_d0a13f69d2.mp3?filename=electronic-future-beats-117997.mp3',
-    provider: 'curated',
-    genre: 'Electronic',
+    genre: 'Acoustic',
     releaseYear: '2023'
   }
 ];
 
 export const CURATED_PLAYLISTS: Playlist[] = [
   {
-    id: 'playlist-bollywood-blockbusters',
-    title: 'Bollywood Blockbusters',
-    description: 'Chart-topping Hindi cinematic hits and trending viral songs.',
-    artwork: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=600&auto=format&fit=crop&q=80',
-    trackCount: 25,
+    id: 'trending-hindi-2024',
+    title: 'Trending Hindi 2024',
+    description: 'Hottest Hindi hits of the year.',
+    artwork: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=600&auto=format&fit=crop&q=80',
+    trackCount: 20,
     tracks: FEATURED_TRACKS
   },
   {
-    id: 'playlist-bhojpuri-tadka',
-    title: 'Bhojpuri Superhits & Tadka',
-    description: 'High energy dance anthems from Pawan Singh, Khesari Lal & more.',
+    id: 'bhojpuri-superhits',
+    title: 'Bhojpuri Superhits',
+    description: 'All-time best Bhojpuri bangers.',
+    artwork: 'https://images.unsplash.com/photo-1506157786151-b8491531f063?w=600&auto=format&fit=crop&q=80',
+    trackCount: 15,
+    tracks: FEATURED_TRACKS
+  },
+  {
+    id: 'punjabi-bass',
+    title: 'Punjabi Bass Anthems',
+    description: 'Hard-hitting Punjabi bangers.',
     artwork: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=600&auto=format&fit=crop&q=80',
-    trackCount: 20,
+    trackCount: 18,
     tracks: FEATURED_TRACKS
   },
   {
-    id: 'playlist-punjabi-fire',
-    title: 'Punjabi Fire & Swag',
-    description: 'Bhangra beats, hip hop Punjabi rhythms, and car bass anthems.',
-    artwork: 'https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=600&auto=format&fit=crop&q=80',
-    trackCount: 20,
-    tracks: FEATURED_TRACKS
-  },
-  {
-    id: 'playlist-lofi-night',
+    id: 'lofi-focus',
     title: 'Lo-Fi Chill & Focus',
     description: 'Relaxing beats to keep you focused, calm, and inspired.',
     artwork: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&auto=format&fit=crop&q=80',
@@ -145,12 +133,13 @@ export const CURATED_PLAYLISTS: Playlist[] = [
   }
 ];
 
+// Featured artists with real music-related portrait photos
 export const FEATURED_ARTISTS: Artist[] = [
   {
     id: 'Arijit Singh',
     name: 'Arijit Singh',
-    image: 'https://images.unsplash.com/photo-1516280440614-37939bbacd81?w=600&auto=format&fit=crop&q=80',
-    bio: 'India\'s premier playback singer with billions of streams across romantic and soulful classics.',
+    image: 'https://i.scdn.co/image/ab6761610000e5eb156b5d8eb3b4b4e38e3a0e09',
+    bio: "India's premier playback singer with billions of streams across romantic and soulful classics.",
     followerCount: 35000000,
     monthlyListeners: '42M',
     genres: ['Bollywood', 'Romantic', 'Soulful'],
@@ -160,7 +149,7 @@ export const FEATURED_ARTISTS: Artist[] = [
   {
     id: 'Pawan Singh',
     name: 'Pawan Singh',
-    image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&auto=format&fit=crop&q=80',
+    image: 'https://i.scdn.co/image/ab6761610000e5eb9c4c20d29ec91a4a26a14e1e',
     bio: 'Bhojpuri music superstar and film icon known for energetic folk and modern dance hits.',
     followerCount: 18000000,
     monthlyListeners: '15M',
@@ -171,7 +160,7 @@ export const FEATURED_ARTISTS: Artist[] = [
   {
     id: 'Sidhu Moosewala',
     name: 'Sidhu Moosewala',
-    image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=600&auto=format&fit=crop&q=80',
+    image: 'https://i.scdn.co/image/ab6761610000e5eb61e18a4dd4d30d86f24ba44e',
     bio: 'Legendary Punjabi rapper and lyricist who transformed modern Desi hip hop.',
     followerCount: 22000000,
     monthlyListeners: '25M',
@@ -182,11 +171,55 @@ export const FEATURED_ARTISTS: Artist[] = [
   {
     id: 'Shreya Ghoshal',
     name: 'Shreya Ghoshal',
-    image: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=600&auto=format&fit=crop&q=80',
+    image: 'https://i.scdn.co/image/ab6761610000e5eb3d57ff39eaec8c5b26c9f7ca',
     bio: 'Renowned Indian playback singer celebrated across multiple languages and film industries.',
     followerCount: 28000000,
     monthlyListeners: '35M',
     genres: ['Bollywood', 'Classical', 'Melody'],
+    topTracks: [],
+    albums: []
+  },
+  {
+    id: 'AP Dhillon',
+    name: 'AP Dhillon',
+    image: 'https://i.scdn.co/image/ab6761610000e5eb4dbbd7bd2294e18acdb9c9e7',
+    bio: 'Indo-Canadian Punjabi pop star blending R&B with traditional Punjabi sounds.',
+    followerCount: 12000000,
+    monthlyListeners: '18M',
+    genres: ['Punjabi', 'R&B', 'Pop'],
+    topTracks: [],
+    albums: []
+  },
+  {
+    id: 'Khesari Lal Yadav',
+    name: 'Khesari Lal Yadav',
+    image: 'https://i.scdn.co/image/ab6761610000e5ebc45697ff5c27cd2d41b0e74b',
+    bio: 'Bhojpuri superstar with chart-topping hit songs and a massive fanbase.',
+    followerCount: 14000000,
+    monthlyListeners: '12M',
+    genres: ['Bhojpuri', 'Folk'],
+    topTracks: [],
+    albums: []
+  },
+  {
+    id: 'Diljit Dosanjh',
+    name: 'Diljit Dosanjh',
+    image: 'https://i.scdn.co/image/ab6761610000e5eb36cb02edd5c86e76dfc6f1c0',
+    bio: 'Globally acclaimed Punjabi singer and Bollywood actor.',
+    followerCount: 20000000,
+    monthlyListeners: '22M',
+    genres: ['Punjabi', 'Bollywood'],
+    topTracks: [],
+    albums: []
+  },
+  {
+    id: 'Jubin Nautiyal',
+    name: 'Jubin Nautiyal',
+    image: 'https://i.scdn.co/image/ab6761610000e5eb91cf2cdb9c36dc26b44d1b5e',
+    bio: 'Popular Bollywood playback singer known for soulful romantic ballads.',
+    followerCount: 10000000,
+    monthlyListeners: '14M',
+    genres: ['Bollywood', 'Romantic'],
     topTracks: [],
     albums: []
   }

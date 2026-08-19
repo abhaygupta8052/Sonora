@@ -24,8 +24,8 @@ import {
   Trophy,
   PartyPopper,
   History,
-  Clock,
-  RotateCcw
+  Search,
+  UserSearch
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -114,11 +114,18 @@ export const HomePage: React.FC = () => {
   const [sectionTracks, setSectionTracks] = useState<Record<string, Track[]>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [selectedTrackForPlaylist, setSelectedTrackForPlaylist] = useState<Track | null>(null);
+  const [artistSearch, setArtistSearch] = useState('');
 
   // Derive the hero banner track from the active filter (reactive)
   const activeSectionConfig = TRENDING_SECTIONS.find((s) => s.id === activeFilter) ?? TRENDING_SECTIONS[0];
   const activeSectionTracks = sectionTracks[activeSectionConfig.id] || [];
   const featuredTrack = activeSectionTracks[0] ?? null;
+
+  const handleArtistSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    const q = artistSearch.trim();
+    if (q) navigate(`/artist/${encodeURIComponent(q)}`);
+  };
 
   useEffect(() => {
     let mounted = true;
@@ -338,19 +345,40 @@ export const HomePage: React.FC = () => {
 
       {/* Featured Artists */}
       {activeFilter === 'all' && (
-        <section>
-          <div className="flex items-center justify-between mb-4">
+        <section className="space-y-5">
+          <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-xl font-bold text-slate-900 dark:text-white">
-                Featured Artists
-              </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
-                Top trending singers & music icons
-              </p>
+              <h3 className="text-xl font-bold text-slate-900 dark:text-white">Featured Artists</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Click any artist to see their full profile & all songs</p>
             </div>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          {/* Singer search */}
+          <form
+            onSubmit={handleArtistSearch}
+            className="flex gap-2 p-3 rounded-2xl bg-white dark:bg-dark-card border border-slate-200 dark:border-slate-800 shadow-sm"
+          >
+            <div className="flex-1 flex items-center gap-2 bg-slate-100 dark:bg-slate-800/80 rounded-xl px-3 py-2">
+              <UserSearch className="w-4 h-4 text-brand-500 shrink-0" />
+              <input
+                type="text"
+                value={artistSearch}
+                onChange={(e) => setArtistSearch(e.target.value)}
+                placeholder="Search any singer… (e.g. Neha Kakkar, Yo Yo Honey Singh)"
+                className="flex-1 bg-transparent text-sm text-slate-900 dark:text-white placeholder-slate-400 outline-none"
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={!artistSearch.trim()}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-xs font-bold disabled:opacity-40 disabled:cursor-not-allowed transition-all active:scale-95"
+            >
+              <Search className="w-3.5 h-3.5" />
+              <span>View Profile</span>
+            </button>
+          </form>
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-4 lg:grid-cols-8 gap-3 sm:gap-4">
             {FEATURED_ARTISTS.map((artist) => (
               <ArtistCard key={artist.id} artist={artist} />
             ))}
