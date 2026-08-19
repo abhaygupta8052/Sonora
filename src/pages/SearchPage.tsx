@@ -7,11 +7,10 @@ import { SearchResults, Track } from '../api/types';
 import { storage } from '../utils/storage';
 import { useDebounce } from '../hooks/useDebounce';
 import { SongRow } from '../components/cards/SongRow';
-import { SongCard } from '../components/cards/SongCard';
 import { ArtistCard } from '../components/cards/ArtistCard';
 import { AlbumCard } from '../components/cards/AlbumCard';
 import { PlaylistCard } from '../components/cards/PlaylistCard';
-import { SongRowSkeleton, SongCardSkeleton } from '../components/common/Skeleton';
+import { SongRowSkeleton } from '../components/common/Skeleton';
 import { EmptyState } from '../components/common/EmptyState';
 import { AddToPlaylistModal } from '../components/common/AddToPlaylistModal';
 import {
@@ -21,12 +20,6 @@ import {
   Disc,
   ListMusic,
   Flame,
-  Zap,
-  Radio,
-  Disc3,
-  Mic2,
-  Heart,
-  PartyPopper,
   TrendingUp,
   Sparkles
 } from 'lucide-react';
@@ -59,7 +52,7 @@ export const SearchPage: React.FC = () => {
   const initialQuery = searchParams.get('q') || '';
 
   const [query, setQuery] = useState(initialQuery);
-  const [activeFilter, setActiveFilter] = useState<FilterTab>(initialQuery ? 'all' : 'trending');
+  const [activeFilter, setActiveFilter] = useState<FilterTab>(initialQuery.trim() ? 'all' : 'trending');
   const [trendingSubCategory, setTrendingSubCategory] = useState('all');
   const [trendingTracks, setTrendingTracks] = useState<Track[]>([]);
   const [isTrendingLoading, setIsTrendingLoading] = useState(true);
@@ -74,7 +67,7 @@ export const SearchPage: React.FC = () => {
   const [history, setHistory] = useState<string[]>(() => storage.getSearchHistory());
   const [selectedTrackForPlaylist, setSelectedTrackForPlaylist] = useState<Track | null>(null);
 
-  const debouncedQuery = useDebounce(query, 350);
+  const debouncedQuery = useDebounce(query, 300);
 
   // Load trending tracks when trending tab or subcategory changes
   useEffect(() => {
@@ -118,6 +111,9 @@ export const SearchPage: React.FC = () => {
       return;
     }
 
+    // Auto-switch to 'all' if currently on trending
+    setActiveFilter((prev) => (prev === 'trending' ? 'all' : prev));
+
     let mounted = true;
     const performSearch = async () => {
       setIsLoading(true);
@@ -145,11 +141,10 @@ export const SearchPage: React.FC = () => {
     setQuery(val);
     if (val.trim()) {
       setSearchParams({ q: val }, { replace: true });
-      if (activeFilter === 'trending') {
-        setActiveFilter('all');
-      }
+      setActiveFilter('all');
     } else {
       setSearchParams({}, { replace: true });
+      setActiveFilter('trending');
     }
   };
 
@@ -173,9 +168,11 @@ export const SearchPage: React.FC = () => {
     results.albums.length > 0 ||
     results.playlists.length > 0;
 
+  const isQueryActive = query.trim().length > 0;
+
   const filterTabs: { id: FilterTab; label: string; icon: any }[] = [
     { id: 'trending', label: '🔥 Trending', icon: Flame },
-    ...(query
+    ...(isQueryActive
       ? [
           { id: 'all' as FilterTab, label: 'All Results', icon: SearchIcon },
           { id: 'songs' as FilterTab, label: `Songs (${results.tracks.length})`, icon: Music },
@@ -203,6 +200,7 @@ export const SearchPage: React.FC = () => {
         <SearchBar
           value={query}
           onChange={handleQueryChange}
+          onSearchSubmit={handleQueryChange}
           isLoading={isLoading}
           placeholder="Search Hindi, Bhojpuri, Arkesta, Punjabi, Haryanvi, Rapper songs..."
           autoFocus={!initialQuery}
@@ -218,7 +216,7 @@ export const SearchPage: React.FC = () => {
             <button
               key={chip}
               onClick={() => handleSelectChip(chip)}
-              className="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-dark-card hover:bg-brand-500/10 hover:text-brand-500 border border-slate-200 dark:border-slate-800 text-[11px] font-semibold text-slate-700 dark:text-slate-300 whitespace-nowrap transition-colors"
+              className="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-dark-card hover:bg-brand-500/10 hover:text-brand-500 border border-slate-200 dark:border-dark-border text-[11px] font-semibold text-slate-700 dark:text-slate-300 whitespace-nowrap transition-colors"
             >
               {chip}
             </button>
@@ -236,7 +234,7 @@ export const SearchPage: React.FC = () => {
       </div>
 
       {/* Main Tabs (Trending + Search result categories) right below Search Bar */}
-      <div className="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-3 overflow-x-auto scrollbar-none">
+      <div className="flex items-center gap-2 border-b border-slate-200 dark:border-dark-border pb-3 overflow-x-auto scrollbar-none">
         {filterTabs.map((tab) => {
           const Icon = tab.icon;
           const isSelected = activeFilter === tab.id;
@@ -247,7 +245,7 @@ export const SearchPage: React.FC = () => {
               className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all ${
                 isSelected
                   ? 'bg-brand-600 text-white shadow-lg shadow-brand-600/30'
-                  : 'bg-white dark:bg-dark-card hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-800'
+                  : 'bg-white dark:bg-dark-card hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-dark-border'
               }`}
             >
               <Icon className="w-4 h-4" />
@@ -300,7 +298,7 @@ export const SearchPage: React.FC = () => {
               ))}
             </div>
           ) : (
-            <div className="space-y-1 bg-white/40 dark:bg-dark-card/40 rounded-2xl p-2 border border-slate-200/60 dark:border-slate-800/60 shadow-sm">
+            <div className="space-y-1 bg-white/40 dark:bg-dark-card/40 rounded-2xl p-2 border border-slate-200/60 dark:border-dark-border/60 shadow-sm">
               {trendingTracks.map((track, i) => (
                 <SongRow
                   key={`trending-row-${track.id}-${i}`}
@@ -349,8 +347,8 @@ export const SearchPage: React.FC = () => {
                   <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-3">
                     Songs ({results.tracks.length})
                   </h3>
-                  <div className="space-y-1 bg-white/40 dark:bg-dark-card/40 rounded-2xl p-2 border border-slate-200/60 dark:border-slate-800/60 shadow-sm">
-                    {results.tracks.slice(0, activeFilter === 'all' ? 12 : 50).map((track, i) => (
+                  <div className="space-y-1 bg-white/40 dark:bg-dark-card/40 rounded-2xl p-2 border border-slate-200/60 dark:border-dark-border/60 shadow-sm">
+                    {results.tracks.slice(0, activeFilter === 'all' ? 15 : 50).map((track, i) => (
                       <SongRow
                         key={`search-song-${track.id}-${i}`}
                         track={track}

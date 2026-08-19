@@ -153,17 +153,26 @@ function decryptMediaUrl(encryptedUrl: string, quality: '320kbps' | '160kbps' | 
 
 /** Normalize a raw official JioSaavn song item → Track */
 function normalizeOfficialSong(item: any): Track {
+  const moreInfo = item.more_info || {};
   let streamUrl = '';
-  if (item.encrypted_media_url) {
-    streamUrl = decryptMediaUrl(item.encrypted_media_url, '320kbps');
-  } else if (item.media_preview_url) {
-    streamUrl = item.media_preview_url
-      .replace('preview.saavncdn.com', 'aac.saavncdn.com')
-      .replace('_96_p.mp4', '_320.mp4');
+
+  const encUrl = item.encrypted_media_url || moreInfo.encrypted_media_url || item.encrypted_url || moreInfo.encrypted_url;
+  if (encUrl) {
+    streamUrl = decryptMediaUrl(encUrl, '320kbps');
+  }
+
+  if (!streamUrl) {
+    const preview = item.media_preview_url || moreInfo.media_preview_url || item.preview_url;
+    if (preview && typeof preview === 'string') {
+      streamUrl = preview
+        .replace('preview.saavncdn.com', 'aac.saavncdn.com')
+        .replace('_96_p.mp4', '_320.mp4')
+        .replace('_96.mp4', '_320.mp4');
+    }
   }
 
   // Artwork — upgrade resolution
-  let rawImage: any = item.image || item.artwork || '';
+  let rawImage: any = item.image || moreInfo.image || item.artwork || '';
   if (typeof rawImage === 'string') {
     rawImage = rawImage.replace('150x150', '500x500').replace('50x50', '500x500');
   } else if (Array.isArray(rawImage) && rawImage.length > 0) {
@@ -174,22 +183,32 @@ function normalizeOfficialSong(item: any): Track {
   const artwork = rawImage || 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=600&auto=format&fit=crop&q=80';
 
   // Artist — always a plain string (fixes React error #31)
-  const rawArtist = item.primary_artists ?? item.singers ?? item.music ?? item.artist ?? 'Unknown Artist';
+  const rawArtist =
+    item.primary_artists ??
+    moreInfo.primary_artists ??
+    item.singers ??
+    moreInfo.singers ??
+    item.music ??
+    moreInfo.music ??
+    item.artist ??
+    'Unknown Artist';
   const artistName = decodeHtml(safeString(rawArtist));
+
+  const title = decodeHtml(safeString(item.song || item.name || item.title || moreInfo.song || 'Untitled Song'));
 
   return {
     id: item.id || `track-${Math.random().toString(36).substring(2, 9)}`,
-    title: decodeHtml(safeString(item.song || item.name || item.title || 'Untitled Song')),
+    title,
     artist: artistName,
-    artistId: safeString(item.primary_artists_id || item.artistId || item.more_info?.artist_map?.primary_artists?.[0]?.id),
-    album: decodeHtml(safeString(item.album || item.more_info?.album || 'Single')),
-    albumId: safeString(item.albumid || item.album_id || item.more_info?.album_id),
-    duration: parseInt(item.duration, 10) || 180,
+    artistId: safeString(item.primary_artists_id || moreInfo.primary_artists_id || item.artistId || moreInfo.artist_map?.primary_artists?.[0]?.id),
+    album: decodeHtml(safeString(item.album || moreInfo.album || 'Single')),
+    albumId: safeString(item.albumid || item.album_id || moreInfo.album_id),
+    duration: parseInt(item.duration || moreInfo.duration, 10) || 180,
     artwork,
     streamUrl,
     provider: 'saavn',
-    releaseYear: safeString(item.year || item.more_info?.year || '2024'),
-    genre: safeString(item.language || item.more_info?.language || 'Bollywood'),
+    releaseYear: safeString(item.year || moreInfo.year || '2024'),
+    genre: safeString(item.language || moreInfo.language || 'Bollywood'),
   };
 }
 
@@ -245,12 +264,13 @@ function normalizeProxyTrack(item: any): Track {
 async function searchSaavn(trimmed: string): Promise<{ tracks: Track[]; artists: Artist[]; albums: Album[]; playlists: Playlist[] }> {
   // 1. Try our own /api/saavn Vercel proxy (CORS-safe)
   try {
-    const params = `?__call=search.getResults&_format=json&p=1&n=25&q=${encodeURIComponent(trimmed)}`;
+    const params = `?__call=search.getResults&_format=json&p=1&n=30&q=${encodeURIComponent(trimmed)}`;
     const res = await fetch(`${SAAVN_PROXY}${params}`, { signal: AbortSignal.timeout(6000) });
     if (res.ok) {
       const data = await res.json();
-      if (data.results && Array.isArray(data.results) && data.results.length > 0) {
-        const rawTracks = data.results.map(normalizeOfficialSong).filter((t: Track) => !!t.streamUrl);
+      const resultsList = data.results || data.data?.results || data.songs?.data || [];
+      if (Array.isArray(resultsList) && resultsList.length > 0) {
+        const rawTracks = resultsList.map(normalizeOfficialSong);
         const tracks = deduplicateTracks(rawTracks);
         if (tracks.length > 0) {
           // Autocomplete for artists / albums
