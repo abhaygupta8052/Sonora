@@ -88,13 +88,14 @@ export const SongRow: React.FC<SongRowProps> = ({
         {/* Title & Artist */}
         <div className="min-w-0 flex-1 pr-2">
           <p
+            title={track.title}
             className={`text-sm font-semibold truncate ${
               isCurrent ? 'text-brand-600 dark:text-brand-400' : 'text-slate-900 dark:text-slate-100 group-hover:text-brand-500 transition-colors'
             }`}
           >
             {track.title}
           </p>
-          <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
+          <p title={track.artist} className="text-xs text-slate-500 dark:text-slate-400 truncate">
             {track.artistId ? (
               <Link
                 to={`/artist/${track.artistId}`}

@@ -76,7 +76,7 @@ export const MusicPlayer: React.FC = () => {
 
         <div className="max-w-7xl mx-auto px-4 lg:px-8 h-20 flex items-center justify-between gap-4">
           {/* Left: Track Info & Artwork */}
-          <div className="flex items-center gap-3 w-1/4 min-w-[180px] max-w-[300px]">
+          <div className="flex items-center gap-3 w-1/3 min-w-[220px] max-w-[360px]">
             <div
               onClick={() => setIsFullPlayerOpen(true)}
               className="relative w-14 h-14 min-w-[56px] min-h-[56px] max-w-[56px] max-h-[56px] rounded-xl overflow-hidden bg-slate-900 shadow-md group cursor-pointer shrink-0"
@@ -94,13 +94,17 @@ export const MusicPlayer: React.FC = () => {
 
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2 min-w-0">
-                <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100 truncate">
+                <h4
+                  title={currentTrack.title}
+                  className="text-sm font-bold text-slate-900 dark:text-slate-100 truncate cursor-pointer hover:text-brand-500 transition-colors"
+                  onClick={() => setIsFullPlayerOpen(true)}
+                >
                   {currentTrack.title}
                 </h4>
                 <Visualizer isPlaying={isPlaying} barCount={3} className="shrink-0" />
               </div>
 
-              <p className="text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5">
+              <p title={currentTrack.artist} className="text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5">
                 {currentTrack.artistId ? (
                   <Link
                     to={`/artist/${encodeURIComponent(currentTrack.artistId)}`}

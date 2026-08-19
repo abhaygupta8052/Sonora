@@ -44,10 +44,10 @@ export const MiniPlayer: React.FC = () => {
             />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-bold text-slate-900 dark:text-slate-100 truncate">
+            <p title={currentTrack.title} className="text-sm font-bold text-slate-900 dark:text-slate-100 truncate">
               {currentTrack.title}
             </p>
-            <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
+            <p title={currentTrack.artist} className="text-xs text-slate-500 dark:text-slate-400 truncate">
               {currentTrack.artist}
             </p>
           </div>

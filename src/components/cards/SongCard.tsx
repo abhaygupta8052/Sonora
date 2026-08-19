@@ -102,10 +102,11 @@ export const SongCard: React.FC<SongCardProps> = ({
       </div>
 
       {/* Metadata */}
-      <div className="flex items-start justify-between gap-1.5 min-w-0">
+      <div className="flex items-start justify-between gap-1.5 min-w-0 mt-1">
         <div className="min-w-0 flex-1">
           <h4
-            className={`text-sm font-semibold truncate ${
+            title={track.title}
+            className={`text-xs sm:text-sm font-bold line-clamp-2 leading-tight min-h-[2.4rem] ${
               isCurrent
                 ? 'text-brand-600 dark:text-brand-400'
                 : 'text-slate-900 dark:text-slate-100 group-hover:text-brand-500 transition-colors'
@@ -113,7 +114,10 @@ export const SongCard: React.FC<SongCardProps> = ({
           >
             {track.title}
           </h4>
-          <p className="text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5">
+          <p
+            title={track.artist}
+            className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 truncate mt-1"
+          >
             {track.artistId ? (
               <Link
                 to={`/artist/${track.artistId}`}
@@ -128,7 +132,7 @@ export const SongCard: React.FC<SongCardProps> = ({
           </p>
         </div>
 
-        <div onClick={(e) => e.stopPropagation()}>
+        <div onClick={(e) => e.stopPropagation()} className="shrink-0 mt-0.5">
           <DropdownMenu track={track} onOpenPlaylistModal={onOpenPlaylistModal} />
         </div>
       </div>

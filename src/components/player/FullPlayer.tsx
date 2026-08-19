@@ -137,16 +137,19 @@ export const FullPlayer: React.FC = () => {
             {/* Track Info & Like Button */}
             <div className="flex items-center justify-between gap-4">
               <div className="min-w-0 flex-1">
-                <h2 className="text-lg sm:text-xl font-bold text-white truncate">
+                <h2
+                  title={currentTrack.title}
+                  className="text-lg sm:text-xl font-bold text-white line-clamp-2 leading-tight"
+                >
                   {currentTrack.title}
                 </h2>
-                <p className="text-xs sm:text-sm font-medium text-slate-400 truncate mt-0.5">
+                <p title={currentTrack.artist} className="text-xs sm:text-sm font-medium text-slate-400 truncate mt-1">
                   {currentTrack.artist} {currentTrack.album && `• ${currentTrack.album}`}
                 </p>
               </div>
               <button
                 onClick={() => toggleFavorite(currentTrack)}
-                className="p-2 rounded-full bg-white/5 hover:bg-white/10 transition-colors shrink-0"
+                className="p-2.5 rounded-full bg-white/5 hover:bg-white/10 transition-colors shrink-0"
                 aria-label={isFav ? 'Remove favorite' : 'Add favorite'}
               >
                 <Heart
