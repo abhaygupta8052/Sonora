@@ -44,8 +44,8 @@ export const Topbar: React.FC<TopbarProps> = ({ onOpenInstallModal }) => {
       <div className="flex items-center gap-3">
         {/* Mobile Logo */}
         <Link to="/" className="md:hidden flex items-center gap-2">
-          <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-brand-600 to-pink-500 flex items-center justify-center shadow-md">
-            <Radio className="w-4 h-4 text-white" />
+          <div className="w-8 h-8 rounded-xl bg-black border border-slate-700/60 overflow-hidden flex items-center justify-center shadow-md shrink-0">
+            <img src="/logo.png" alt="Sonora Logo" className="w-full h-full object-contain p-0.5" />
           </div>
           <span className="font-extrabold text-base tracking-tight text-slate-900 dark:text-white">
             Sonora

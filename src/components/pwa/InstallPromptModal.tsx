@@ -55,8 +55,8 @@ export const InstallPromptModal: React.FC<InstallPromptModalProps> = ({
     <Modal isOpen={isOpen} onClose={onClose} title="Install Sonora Music">
       <div className="flex flex-col items-center text-center space-y-4 max-w-full">
         {/* App Logo */}
-        <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl sm:rounded-3xl bg-gradient-to-tr from-brand-600 via-indigo-600 to-pink-500 flex items-center justify-center text-white shadow-xl shadow-brand-500/25 shrink-0">
-          <Radio className="w-7 h-7 sm:w-8 sm:h-8" />
+        <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl sm:rounded-3xl bg-black border border-slate-700/60 overflow-hidden flex items-center justify-center text-white shadow-xl shadow-brand-500/25 shrink-0">
+          <img src="/logo.png" alt="Sonora Logo" className="w-full h-full object-contain p-1.5" />
         </div>
 
         <div className="space-y-1">
