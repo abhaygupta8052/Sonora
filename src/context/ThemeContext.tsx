@@ -26,8 +26,12 @@ export interface AppThemeConfig {
   accentHover: string;
   accentGlow: string;
   bgDark: string;
+  surfaceDark: string;
   cardDark: string;
+  cardHover: string;
   borderDark: string;
+  textDark: string;
+  mutedDark: string;
 }
 
 export const APP_THEMES: AppThemeConfig[] = [
@@ -37,12 +41,16 @@ export const APP_THEMES: AppThemeConfig[] = [
     description: 'Dark glassmorphism with dynamic artwork backdrop',
     icon: '🎵',
     swatches: ['#1e1b4b', '#7c3aed', '#0f172a'],
-    accent: '#7c3aed',
-    accentHover: '#6d28d9',
-    accentGlow: 'rgba(124, 58, 237, 0.35)',
+    accent: '#8b5cf6',
+    accentHover: '#7c3aed',
+    accentGlow: 'rgba(139, 92, 246, 0.35)',
     bgDark: '#090D16',
+    surfaceDark: '#0e1424',
     cardDark: '#161F33',
-    borderDark: 'rgba(124, 58, 237, 0.25)'
+    cardHover: '#1e2b45',
+    borderDark: '#232F48',
+    textDark: '#F8FAFC',
+    mutedDark: '#94A3B8'
   },
   {
     id: 'neumorphic',
@@ -51,12 +59,16 @@ export const APP_THEMES: AppThemeConfig[] = [
     icon: '☁️',
     swatches: ['#e5dfd3', '#b8a88f', '#f2efe9'],
     isLight: true,
-    accent: '#b8a88f',
-    accentHover: '#a3937a',
-    accentGlow: 'rgba(184, 168, 143, 0.35)',
+    accent: '#a3937a',
+    accentHover: '#8c7c65',
+    accentGlow: 'rgba(163, 147, 122, 0.35)',
     bgDark: '#ede8df',
+    surfaceDark: '#e5dfd3',
     cardDark: '#f5f2eb',
-    borderDark: 'rgba(184, 168, 143, 0.3)'
+    cardHover: '#ece6dc',
+    borderDark: '#d8cebf',
+    textDark: '#2d261e',
+    mutedDark: '#7a6e60'
   },
   {
     id: 'vibrant',
@@ -66,10 +78,14 @@ export const APP_THEMES: AppThemeConfig[] = [
     swatches: ['#3b0764', '#a855f7', '#8b5cf6'],
     accent: '#a855f7',
     accentHover: '#9333ea',
-    accentGlow: 'rgba(168, 85, 247, 0.4)',
+    accentGlow: 'rgba(168, 85, 247, 0.45)',
     bgDark: '#0f051d',
-    cardDark: '#1f0a38',
-    borderDark: 'rgba(168, 85, 247, 0.3)'
+    surfaceDark: '#17082e',
+    cardDark: '#220d40',
+    cardHover: '#30135c',
+    borderDark: '#43197a',
+    textDark: '#FAF5FF',
+    mutedDark: '#C084FC'
   },
   {
     id: 'minimal',
@@ -79,10 +95,14 @@ export const APP_THEMES: AppThemeConfig[] = [
     swatches: ['#0f172a', '#3b82f6', '#1e293b'],
     accent: '#3b82f6',
     accentHover: '#2563eb',
-    accentGlow: 'rgba(59, 130, 246, 0.35)',
+    accentGlow: 'rgba(59, 130, 246, 0.4)',
     bgDark: '#0b1120',
-    cardDark: '#131c31',
-    borderDark: 'rgba(59, 130, 246, 0.25)'
+    surfaceDark: '#0f172a',
+    cardDark: '#162238',
+    cardHover: '#1e2f4d',
+    borderDark: '#243656',
+    textDark: '#F8FAFC',
+    mutedDark: '#94A3B8'
   },
   {
     id: 'glass-pro',
@@ -94,8 +114,12 @@ export const APP_THEMES: AppThemeConfig[] = [
     accentHover: '#0284c7',
     accentGlow: 'rgba(14, 165, 233, 0.4)',
     bgDark: '#041726',
-    cardDark: '#0c253d',
-    borderDark: 'rgba(14, 165, 233, 0.3)'
+    surfaceDark: '#08253d',
+    cardDark: '#0d3454',
+    cardHover: '#13466f',
+    borderDark: '#1a5685',
+    textDark: '#F0F9FF',
+    mutedDark: '#7DD3FC'
   },
   {
     id: 'cherry-blossom',
@@ -106,9 +130,13 @@ export const APP_THEMES: AppThemeConfig[] = [
     accent: '#f43f5e',
     accentHover: '#e11d48',
     accentGlow: 'rgba(244, 63, 94, 0.4)',
-    bgDark: '#16030a',
-    cardDark: '#290915',
-    borderDark: 'rgba(244, 63, 94, 0.3)'
+    bgDark: '#17040b',
+    surfaceDark: '#240713',
+    cardDark: '#360c1d',
+    cardHover: '#4d132b',
+    borderDark: '#631938',
+    textDark: '#FFF1F2',
+    mutedDark: '#FDA4AF'
   },
   {
     id: 'sunset-shades',
@@ -120,8 +148,12 @@ export const APP_THEMES: AppThemeConfig[] = [
     accentHover: '#ea580c',
     accentGlow: 'rgba(249, 115, 22, 0.4)',
     bgDark: '#170802',
-    cardDark: '#2b1206',
-    borderDark: 'rgba(249, 115, 22, 0.3)'
+    surfaceDark: '#240d04',
+    cardDark: '#381608',
+    cardHover: '#4f210d',
+    borderDark: '#692d13',
+    textDark: '#FFF7ED',
+    mutedDark: '#FDBA74'
   },
   {
     id: 'arc-studio',
@@ -133,8 +165,12 @@ export const APP_THEMES: AppThemeConfig[] = [
     accentHover: '#0891b2',
     accentGlow: 'rgba(6, 182, 212, 0.4)',
     bgDark: '#021814',
-    cardDark: '#062822',
-    borderDark: 'rgba(6, 182, 212, 0.3)'
+    surfaceDark: '#04241e',
+    cardDark: '#093830',
+    cardHover: '#0e4f44',
+    borderDark: '#14695b',
+    textDark: '#ECFEFF',
+    mutedDark: '#67E8F9'
   },
   {
     id: 'cosmic-aurora',
@@ -145,9 +181,13 @@ export const APP_THEMES: AppThemeConfig[] = [
     accent: '#818cf8',
     accentHover: '#6366f1',
     accentGlow: 'rgba(129, 140, 248, 0.4)',
-    bgDark: '#060812',
-    cardDark: '#101426',
-    borderDark: 'rgba(129, 140, 248, 0.3)'
+    bgDark: '#070914',
+    surfaceDark: '#0d1124',
+    cardDark: '#151b38',
+    cardHover: '#1e274f',
+    borderDark: '#2a366b',
+    textDark: '#EEF2FF',
+    mutedDark: '#A5B4FC'
   },
   {
     id: 'midnight-ember',
@@ -159,8 +199,12 @@ export const APP_THEMES: AppThemeConfig[] = [
     accentHover: '#ea580c',
     accentGlow: 'rgba(249, 115, 22, 0.4)',
     bgDark: '#09090b',
-    cardDark: '#18181b',
-    borderDark: 'rgba(249, 115, 22, 0.3)'
+    surfaceDark: '#121215',
+    cardDark: '#1c1c21',
+    cardHover: '#27272e',
+    borderDark: '#383842',
+    textDark: '#FAFAFA',
+    mutedDark: '#A1A1AA'
   },
   {
     id: 'emerald-gold',
@@ -171,9 +215,13 @@ export const APP_THEMES: AppThemeConfig[] = [
     accent: '#eab308',
     accentHover: '#ca8a04',
     accentGlow: 'rgba(234, 179, 8, 0.4)',
-    bgDark: '#05150b',
-    cardDark: '#0d2817',
-    borderDark: 'rgba(234, 179, 8, 0.3)'
+    bgDark: '#04140a',
+    surfaceDark: '#082112',
+    cardDark: '#0e331d',
+    cardHover: '#15472a',
+    borderDark: '#1e6139',
+    textDark: '#FEFCE8',
+    mutedDark: '#FDE047'
   }
 ];
 
@@ -213,7 +261,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     storage.setSyncAccent(enabled);
   };
 
-  // Apply base dark/light theme mode
+  // Base dark/light theme mode
   useEffect(() => {
     const root = document.documentElement;
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
@@ -247,7 +295,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     return () => mediaQuery.removeEventListener('change', handleChange);
   }, [theme]);
 
-  // Apply visual AppTheme CSS variables and root classes
+  // Apply visual AppTheme CSS variables, document background, and root classes
   useEffect(() => {
     const root = document.documentElement;
 
@@ -255,20 +303,27 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     APP_THEMES.forEach((t) => root.classList.remove(`theme-${t.id}`));
     root.classList.add(`theme-${appTheme}`);
 
+    // Always inject theme colors
+    root.style.setProperty('--theme-bg-dark', currentThemeConfig.bgDark);
+    root.style.setProperty('--theme-surface-dark', currentThemeConfig.surfaceDark);
+    root.style.setProperty('--theme-card-dark', currentThemeConfig.cardDark);
+    root.style.setProperty('--theme-card-hover', currentThemeConfig.cardHover);
+    root.style.setProperty('--theme-border-dark', currentThemeConfig.borderDark);
+    root.style.setProperty('--theme-text-dark', currentThemeConfig.textDark);
+    root.style.setProperty('--theme-muted-dark', currentThemeConfig.mutedDark);
+
     if (syncAccent) {
       root.style.setProperty('--theme-accent', currentThemeConfig.accent);
       root.style.setProperty('--theme-accent-hover', currentThemeConfig.accentHover);
       root.style.setProperty('--theme-accent-glow', currentThemeConfig.accentGlow);
-      root.style.setProperty('--theme-bg-dark', currentThemeConfig.bgDark);
-      root.style.setProperty('--theme-card-dark', currentThemeConfig.cardDark);
-      root.style.setProperty('--theme-border-dark', currentThemeConfig.borderDark);
     } else {
-      root.style.removeProperty('--theme-accent');
-      root.style.removeProperty('--theme-accent-hover');
-      root.style.removeProperty('--theme-accent-glow');
-      root.style.removeProperty('--theme-bg-dark');
-      root.style.removeProperty('--theme-card-dark');
-      root.style.removeProperty('--theme-border-dark');
+      root.style.setProperty('--theme-accent', '#8b5cf6');
+      root.style.setProperty('--theme-accent-hover', '#7c3aed');
+      root.style.setProperty('--theme-accent-glow', 'rgba(139, 92, 246, 0.35)');
+    }
+
+    if (document.body) {
+      document.body.style.backgroundColor = currentThemeConfig.bgDark;
     }
   }, [appTheme, syncAccent, currentThemeConfig]);
 
