@@ -8,10 +8,17 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
+      injectRegister: 'auto',
       devOptions: {
         enabled: true
       },
-      includeAssets: ['favicon.svg', 'apple-touch-icon.png', 'icons/*.png', 'icons/*.svg'],
+      includeAssets: [
+        'favicon.svg',
+        'apple-touch-icon.png',
+        'icons/icon-192.png',
+        'icons/icon-512.png',
+        'icons/apple-touch-icon.png'
+      ],
       manifest: {
         name: 'Sonora — Music Stream & Discover',
         short_name: 'Sonora',
@@ -19,18 +26,26 @@ export default defineConfig({
         theme_color: '#090D16',
         background_color: '#090D16',
         display: 'standalone',
-        // Do NOT set orientation — it blocks desktop Chrome from showing install prompt
+        display_override: ['standalone', 'window-controls-overlay'],
         start_url: '/',
         scope: '/',
         id: '/',
-        lang: 'en',
-        categories: ['music', 'entertainment'],
+        lang: 'en-US',
+        dir: 'ltr',
+        prefer_related_applications: false,
+        categories: ['music', 'entertainment', 'audio'],
         icons: [
           {
             src: '/icons/icon-192.png',
             sizes: '192x192',
             type: 'image/png',
             purpose: 'any'
+          },
+          {
+            src: '/icons/icon-192.png',
+            sizes: '192x192',
+            type: 'image/png',
+            purpose: 'maskable'
           },
           {
             src: '/icons/icon-512.png',
@@ -44,10 +59,36 @@ export default defineConfig({
             type: 'image/png',
             purpose: 'maskable'
           }
+        ],
+        shortcuts: [
+          {
+            name: 'Trending Hits',
+            short_name: 'Trending',
+            description: 'Listen to trending music charts',
+            url: '/trending',
+            icons: [{ src: '/icons/icon-192.png', sizes: '192x192' }]
+          },
+          {
+            name: 'Search Songs',
+            short_name: 'Search',
+            description: 'Search artists, songs, and albums',
+            url: '/search',
+            icons: [{ src: '/icons/icon-192.png', sizes: '192x192' }]
+          },
+          {
+            name: 'My Library',
+            short_name: 'Library',
+            description: 'View playlists and listening history',
+            url: '/library',
+            icons: [{ src: '/icons/icon-192.png', sizes: '192x192' }]
+          }
         ]
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
+        cleanupOutdatedCaches: true,
+        clientsClaim: true,
+        skipWaiting: true,
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
