@@ -25,7 +25,8 @@ import {
   PartyPopper,
   History,
   Search,
-  UserSearch
+  UserSearch,
+  Film
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -168,6 +169,15 @@ export const HomePage: React.FC = () => {
     <div className="space-y-8 animate-fade-in">
       {/* Category Pills Filter Bar */}
       <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none sticky top-16 z-20 bg-slate-50/90 dark:bg-dark-bg/90 backdrop-blur-md py-2 -mx-4 px-4 sm:-mx-6 sm:px-6">
+        {/* Quick Reels Mode Button */}
+        <button
+          onClick={() => navigate('/reels')}
+          className="px-4 py-2 rounded-full text-xs font-extrabold whitespace-nowrap transition-all flex items-center gap-1.5 bg-gradient-to-r from-pink-600 via-rose-600 to-amber-600 hover:from-pink-500 hover:to-amber-500 text-white shadow-lg shadow-pink-600/30 active:scale-95 animate-pulse"
+        >
+          <Film className="w-3.5 h-3.5" />
+          <span>🔥 Scroll Music Reels</span>
+        </button>
+
         <button
           onClick={() => setActiveFilter('all')}
           className={`px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 ${
@@ -177,7 +187,7 @@ export const HomePage: React.FC = () => {
           }`}
         >
           <Trophy className="w-3.5 h-3.5" />
-          <span>🔥 All Trending</span>
+          <span>All Trending</span>
         </button>
 
         {TRENDING_SECTIONS.map((sec) => (
