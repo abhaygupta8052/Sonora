@@ -23,7 +23,9 @@ import {
   Mic2,
   Trophy,
   PartyPopper,
-  Compass
+  History,
+  Clock,
+  RotateCcw
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -105,7 +107,7 @@ const TRENDING_SECTIONS: TrendingSectionConfig[] = [
 
 export const HomePage: React.FC = () => {
   const navigate = useNavigate();
-  const { playTrack } = useAudioPlayer();
+  const { playTrack, currentTrack } = useAudioPlayer();
   const { recentlyPlayed } = useLibrary();
 
   const [activeFilter, setActiveFilter] = useState('all');
@@ -159,7 +161,7 @@ export const HomePage: React.FC = () => {
       : TRENDING_SECTIONS.filter((s) => s.id === activeFilter);
 
   return (
-    <div className="space-y-10 animate-fade-in">
+    <div className="space-y-8 animate-fade-in">
       {/* Category Pills Filter Bar */}
       <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none sticky top-16 z-20 bg-slate-50/90 dark:bg-dark-bg/90 backdrop-blur-md py-2 -mx-4 px-4 sm:-mx-6 sm:px-6">
         <button
@@ -188,6 +190,51 @@ export const HomePage: React.FC = () => {
           </button>
         ))}
       </div>
+
+      {/* ========================================================================= */}
+      {/* 1. TOP SECTION: RECENTLY PLAYED / LISTENING HISTORY                       */}
+      {/* ========================================================================= */}
+      {recentlyPlayed.length > 0 && activeFilter === 'all' && (
+        <section className="p-4 sm:p-5 rounded-3xl bg-gradient-to-r from-brand-950/40 via-purple-950/20 to-slate-900/40 border border-brand-500/20 shadow-md space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 rounded-xl bg-brand-500/20 text-brand-400">
+                <History className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-lg sm:text-xl font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
+                  <span>Recently Played History</span>
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-brand-500/20 text-brand-400 font-bold">
+                    {recentlyPlayed.length}
+                  </span>
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Jump back into your recent music streams
+                </p>
+              </div>
+            </div>
+
+            <button
+              onClick={() => navigate('/library?tab=history')}
+              className="inline-flex items-center gap-1 text-xs font-bold text-brand-600 dark:text-brand-400 hover:underline"
+            >
+              <span>View Full History</span>
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4">
+            {recentlyPlayed.slice(0, 6).map((track) => (
+              <SongCard
+                key={`top-recent-${track.id}`}
+                track={track}
+                queueContext={recentlyPlayed}
+                onOpenPlaylistModal={(t) => setSelectedTrackForPlaylist(t)}
+              />
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Hero Featured Stream Banner */}
       {featuredTrack ? (
@@ -228,32 +275,6 @@ export const HomePage: React.FC = () => {
           </div>
         </section>
       ) : null}
-
-      {/* Jump Back In (Recently Played) */}
-      {recentlyPlayed.length > 0 && activeFilter === 'all' && (
-        <section>
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h3 className="text-xl font-bold text-slate-900 dark:text-white">
-                Jump Back In
-              </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
-                Continue listening where you left off
-              </p>
-            </div>
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-            {recentlyPlayed.slice(0, 6).map((track) => (
-              <SongCard
-                key={`recent-${track.id}`}
-                track={track}
-                queueContext={recentlyPlayed}
-                onOpenPlaylistModal={(t) => setSelectedTrackForPlaylist(t)}
-              />
-            ))}
-          </div>
-        </section>
-      )}
 
       {/* Dedicated Trending Sections */}
       {visibleSections.map((sec) => {

@@ -22,7 +22,13 @@ type LibraryTab = 'playlists' | 'liked' | 'recent';
 
 export const LibraryPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const initialTab = (searchParams.get('tab') as LibraryTab) || 'playlists';
+  const rawTab = searchParams.get('tab');
+  const initialTab: LibraryTab =
+    rawTab === 'recent' || rawTab === 'history'
+      ? 'recent'
+      : rawTab === 'liked'
+      ? 'liked'
+      : 'playlists';
 
   const [activeTab, setActiveTab] = useState<LibraryTab>(initialTab);
   const {
@@ -42,9 +48,13 @@ export const LibraryPage: React.FC = () => {
   const [selectedTrackForPlaylist, setSelectedTrackForPlaylist] = useState<Track | null>(null);
 
   useEffect(() => {
-    const tabParam = searchParams.get('tab') as LibraryTab;
-    if (tabParam && ['playlists', 'liked', 'recent'].includes(tabParam)) {
-      setActiveTab(tabParam);
+    const tabParam = searchParams.get('tab');
+    if (tabParam === 'recent' || tabParam === 'history') {
+      setActiveTab('recent');
+    } else if (tabParam === 'liked') {
+      setActiveTab('liked');
+    } else if (tabParam === 'playlists') {
+      setActiveTab('playlists');
     }
   }, [searchParams]);
 
