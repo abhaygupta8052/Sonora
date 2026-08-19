@@ -47,6 +47,87 @@ function decodeHtml(html: string): string {
     .replace(/&apos;/g, "'");
 }
 
+/**
+ * Generate a normalized deduplication key for a track.
+ * Strips movie descriptors like (From "Movie"), (Audio), (Official Video), punctuation, and casing.
+ */
+export function getSongDedupKey(track: Track): string {
+  if (!track || !track.title) return '';
+
+  // 1. Clean title: remove descriptors in brackets
+  const cleanTitle = track.title
+    .toLowerCase()
+    .replace(/\((from|video|audio|official|lyrics|hd|4k|remix|slowed|reverb|full song|original)[^)]*\)/gi, '')
+    .replace(/\[(from|video|audio|official|lyrics|hd|4k|remix|slowed|reverb|full song|original)[^\]]*\]/gi, '')
+    .replace(/[^\w\s\u0900-\u097F]/g, '') // keep letters, numbers, devanagari hindi letters
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  // 2. Clean artist: extract primary artist
+  const cleanArtist = (track.artist || '')
+    .toLowerCase()
+    .split(',')[0]
+    .split('&')[0]
+    .replace(/[^\w\s\u0900-\u097F]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  return `${cleanTitle}::${cleanArtist}`;
+}
+
+/**
+ * Deduplicates an array of tracks.
+ * When duplicates are encountered (same normalized title + artist), gives priority to:
+ * 1. Official JioSaavn 320kbps streams over YouTube
+ * 2. Higher resolution artwork
+ * 3. Valid duration metadata
+ */
+export function deduplicateTracks(tracks: Track[]): Track[] {
+  if (!Array.isArray(tracks) || tracks.length === 0) return [];
+
+  const seenIds = new Set<string>();
+  const keyMap = new Map<string, Track>();
+  const orderedKeys: string[] = [];
+
+  for (const track of tracks) {
+    if (!track || !track.title || !track.streamUrl) continue;
+
+    // Check exact ID duplicate first
+    if (seenIds.has(track.id)) continue;
+    seenIds.add(track.id);
+
+    const key = getSongDedupKey(track);
+    if (!key) {
+      orderedKeys.push(track.id);
+      keyMap.set(track.id, track);
+      continue;
+    }
+
+    if (!keyMap.has(key)) {
+      keyMap.set(key, track);
+      orderedKeys.push(key);
+    } else {
+      // Duplicate found! Prioritize higher quality track
+      const existing = keyMap.get(key)!;
+      const existingScore =
+        (existing.provider === 'saavn' ? 10 : 0) +
+        (existing.artwork && !existing.artwork.includes('unsplash') ? 5 : 0) +
+        (existing.duration > 0 ? 2 : 0);
+
+      const newScore =
+        (track.provider === 'saavn' ? 10 : 0) +
+        (track.artwork && !track.artwork.includes('unsplash') ? 5 : 0) +
+        (track.duration > 0 ? 2 : 0);
+
+      if (newScore > existingScore) {
+        keyMap.set(key, track); // Replace with higher priority version
+      }
+    }
+  }
+
+  return orderedKeys.map((k) => keyMap.get(k)!).filter(Boolean);
+}
+
 /** Decrypt official JioSaavn encrypted_media_url → direct streaming URL */
 function decryptMediaUrl(encryptedUrl: string, quality: '320kbps' | '160kbps' | '96kbps' = '320kbps'): string {
   if (!encryptedUrl) return '';
@@ -169,7 +250,8 @@ async function searchSaavn(trimmed: string): Promise<{ tracks: Track[]; artists:
     if (res.ok) {
       const data = await res.json();
       if (data.results && Array.isArray(data.results) && data.results.length > 0) {
-        const tracks = data.results.map(normalizeOfficialSong).filter((t: Track) => !!t.streamUrl);
+        const rawTracks = data.results.map(normalizeOfficialSong).filter((t: Track) => !!t.streamUrl);
+        const tracks = deduplicateTracks(rawTracks);
         if (tracks.length > 0) {
           // Autocomplete for artists / albums
           let artists: Artist[] = [];
@@ -233,7 +315,8 @@ async function searchSaavn(trimmed: string): Promise<{ tracks: Track[]; artists:
         const data = await res.json();
         const resultsList = data?.data?.results || data?.results || [];
         if (Array.isArray(resultsList) && resultsList.length > 0) {
-          const tracks = resultsList.map(normalizeProxyTrack).filter((t: Track) => !!t.streamUrl);
+          const rawTracks = resultsList.map(normalizeProxyTrack).filter((t: Track) => !!t.streamUrl);
+          const tracks = deduplicateTracks(rawTracks);
           if (tracks.length > 0) return { tracks, artists: [], albums: [], playlists: [] };
         }
       }
@@ -251,7 +334,8 @@ async function trendingSaavn(query: string): Promise<Track[]> {
     if (res.ok) {
       const data = await res.json();
       if (data.results && Array.isArray(data.results) && data.results.length > 0) {
-        const tracks = data.results.map(normalizeOfficialSong).filter((t: Track) => !!t.streamUrl);
+        const rawTracks = data.results.map(normalizeOfficialSong).filter((t: Track) => !!t.streamUrl);
+        const tracks = deduplicateTracks(rawTracks);
         if (tracks.length > 0) return tracks;
       }
     }
@@ -262,13 +346,14 @@ async function trendingSaavn(query: string): Promise<Track[]> {
   // Community mirrors
   for (const endpoint of BACKUP_ENDPOINTS) {
     try {
-      const res = await fetch(`${endpoint}/search/songs?query=${encodeURIComponent(query)}&limit=20`, {
+      const res = await fetch(`${endpoint}/search/songs?query=${encodeURIComponent(query)}&limit=25`, {
         signal: AbortSignal.timeout(5000),
       });
       if (res.ok) {
         const data = await res.json();
         const list = data?.data?.results || data?.results || [];
-        const tracks = list.map(normalizeProxyTrack).filter((t: Track) => !!t.streamUrl);
+        const rawTracks = list.map(normalizeProxyTrack).filter((t: Track) => !!t.streamUrl);
+        const tracks = deduplicateTracks(rawTracks);
         if (tracks.length > 0) return tracks;
       }
     } catch { /* next */ }
@@ -283,16 +368,6 @@ async function trendingSaavn(query: string): Promise<Track[]> {
  */
 async function fetchAllArtistSongs(artistName: string): Promise<Track[]> {
   const allTracks: Track[] = [];
-  const seenIds = new Set<string>();
-
-  const addTracks = (tracks: Track[]) => {
-    for (const t of tracks) {
-      if (!seenIds.has(t.id) && t.streamUrl) {
-        seenIds.add(t.id);
-        allTracks.push(t);
-      }
-    }
-  };
 
   // Fetch 3 pages from proxy in parallel for speed
   try {
@@ -309,9 +384,12 @@ async function fetchAllArtistSongs(artistName: string): Promise<Track[]> {
     });
     const pages = await Promise.allSettled(pagePromises);
     for (const p of pages) {
-      if (p.status === 'fulfilled') addTracks(p.value);
+      if (p.status === 'fulfilled') {
+        allTracks.push(...p.value);
+      }
     }
-    if (allTracks.length > 0) return allTracks;
+    const deduped = deduplicateTracks(allTracks);
+    if (deduped.length > 0) return deduped;
   } catch (e) {
     console.warn('Multi-page artist search failed, trying mirrors...', e);
   }
@@ -325,8 +403,9 @@ async function fetchAllArtistSongs(artistName: string): Promise<Track[]> {
       if (res.ok) {
         const data = await res.json();
         const list = data?.data?.results || data?.results || [];
-        const tracks = list.map(normalizeProxyTrack).filter((t: Track) => !!t.streamUrl);
-        if (tracks.length > 0) return tracks;
+        const rawTracks = list.map(normalizeProxyTrack).filter((t: Track) => !!t.streamUrl);
+        const deduped = deduplicateTracks(rawTracks);
+        if (deduped.length > 0) return deduped;
       }
     } catch { /* next */ }
   }
@@ -396,11 +475,10 @@ function extractArtistImageFromSongs(songs: Track[], artistName: string): string
 
 // ─── Public API ──────────────────────────────────────────────────────────────
 
-
 export const musicApi = {
   /**
    * Search across JioSaavn + YouTube Music (as fallback).
-   * - Primary: JioSaavn proxy + community mirrors
+   * - Primary: JioSaavn proxy + community mirrors (deduplicated)
    * - Fallback: YouTube Music discovery (Piped/Invidious)
    * - Final fallback: curated static data
    */
@@ -414,17 +492,9 @@ export const musicApi = {
       ytMusicService.search(trimmed).catch(() => [] as Track[]),
     ]);
 
-    // Merge: JioSaavn first, YouTube fills gaps
-    const combined: Track[] = [...saavnResult.tracks];
-    const seenTitles = new Set(saavnResult.tracks.map((t) => t.title.toLowerCase().trim()));
-
-    for (const yt of ytTracks) {
-      const lower = yt.title.toLowerCase().trim();
-      if (!seenTitles.has(lower)) {
-        seenTitles.add(lower);
-        combined.push(yt);
-      }
-    }
+    // Merge: JioSaavn first, YouTube fills gaps, then apply deduplication
+    const rawCombined: Track[] = [...saavnResult.tracks, ...ytTracks];
+    const combined = deduplicateTracks(rawCombined);
 
     if (combined.length > 0) {
       return {
@@ -444,7 +514,7 @@ export const musicApi = {
         (t.genre && t.genre.toLowerCase().includes(qLower))
     );
     return {
-      tracks: filtered.length > 0 ? filtered : FEATURED_TRACKS,
+      tracks: filtered.length > 0 ? deduplicateTracks(filtered) : FEATURED_TRACKS,
       artists: FEATURED_ARTISTS,
       albums: [],
       playlists: CURATED_PLAYLISTS,
@@ -455,12 +525,12 @@ export const musicApi = {
   async getTrending(query = 'Top Bollywood Hindi Hits 2024'): Promise<Track[]> {
     // Try JioSaavn first, YouTube as fallback
     const saavnTracks = await trendingSaavn(query);
-    if (saavnTracks.length > 0) return saavnTracks;
+    if (saavnTracks.length > 0) return deduplicateTracks(saavnTracks);
 
     // YouTube Music fallback for trending
     try {
       const ytTracks = await ytMusicService.search(query);
-      if (ytTracks.length > 0) return ytTracks;
+      if (ytTracks.length > 0) return deduplicateTracks(ytTracks);
     } catch { /* ignore */ }
 
     return FEATURED_TRACKS;
@@ -482,10 +552,12 @@ export const musicApi = {
     );
 
     // Fetch songs (multi-page) + real artist image in parallel
-    const [songs, realImage] = await Promise.all([
+    const [rawSongs, realImage] = await Promise.all([
       fetchAllArtistSongs(artistName),
       fetchArtistRealImage(artistName),
     ]);
+
+    const songs = deduplicateTracks(rawSongs);
 
     // Best image: real API image > local curated > song artwork fallback > avatar API
     const artistImage =
@@ -509,23 +581,25 @@ export const musicApi = {
 
   /** Public method to get all songs by artist name (multi-page) */
   async getArtistSongs(artistName: string): Promise<Track[]> {
-    return fetchAllArtistSongs(artistName);
+    const songs = await fetchAllArtistSongs(artistName);
+    return deduplicateTracks(songs);
   },
 
   async getAlbumDetails(id: string): Promise<Album | null> {
     try {
       const songs = await this.getTrending(id);
-      if (songs.length > 0) {
+      const deduped = deduplicateTracks(songs);
+      if (deduped.length > 0) {
         return {
           id,
-          title: decodeHtml(safeString(songs[0].album || id)),
-          artist: songs[0].artist,
-          artistId: songs[0].artistId,
-          artwork: songs[0].artwork,
-          releaseYear: songs[0].releaseYear || '2024',
-          trackCount: songs.length,
-          tracks: songs,
-          genre: songs[0].genre,
+          title: decodeHtml(safeString(deduped[0].album || id)),
+          artist: deduped[0].artist,
+          artistId: deduped[0].artistId,
+          artwork: deduped[0].artwork,
+          releaseYear: deduped[0].releaseYear || '2024',
+          trackCount: deduped.length,
+          tracks: deduped,
+          genre: deduped[0].genre,
         };
       }
     } catch { /* ignore */ }
@@ -537,13 +611,14 @@ export const musicApi = {
     if (local) return local;
     try {
       const songs = await this.getTrending(id);
+      const deduped = deduplicateTracks(songs);
       return {
         id,
         title: decodeHtml(id.replace(/[-_]/g, ' ')),
         description: 'Curated Music Stream',
-        artwork: songs[0]?.artwork || 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=600',
-        trackCount: songs.length,
-        tracks: songs,
+        artwork: deduped[0]?.artwork || 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=600',
+        trackCount: deduped.length,
+        tracks: deduped,
       };
     } catch { /* ignore */ }
     return CURATED_PLAYLISTS[0];
