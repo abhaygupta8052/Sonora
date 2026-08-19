@@ -66,7 +66,7 @@ export const MusicPlayer: React.FC = () => {
       <QueueDrawer />
 
       {/* Desktop Persistent Bottom Bar (visible on md: and above) */}
-      <aside className="hidden md:block fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-[#0E1524]/95 backdrop-blur-xl border-t border-slate-200 dark:border-slate-800 shadow-[0_-8px_30px_rgba(0,0,0,0.12)]">
+      <aside className="hidden md:block fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-dark-card/95 backdrop-blur-xl border-t border-slate-200 dark:border-dark-border shadow-[0_-8px_30px_rgba(0,0,0,0.12)] transition-colors duration-300">
         {playbackError && (
           <div className="bg-rose-500/10 border-b border-rose-500/20 px-4 py-1.5 flex items-center justify-center gap-2 text-xs font-medium text-rose-500">
             <AlertCircle className="w-3.5 h-3.5 shrink-0" />

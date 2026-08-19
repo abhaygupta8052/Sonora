@@ -12,7 +12,7 @@ export const BottomNav: React.FC = () => {
   ];
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-30 h-16 bg-white/95 dark:bg-[#0E1524]/95 backdrop-blur-xl border-t border-slate-200 dark:border-slate-800/80 px-2 flex items-center justify-around select-none">
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-30 h-16 bg-white/95 dark:bg-dark-card/95 backdrop-blur-xl border-t border-slate-200 dark:border-dark-border px-2 flex items-center justify-around select-none transition-colors duration-300">
       {tabs.map((tab) => {
         const Icon = tab.icon;
         return (

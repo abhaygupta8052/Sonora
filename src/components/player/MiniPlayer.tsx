@@ -23,7 +23,7 @@ export const MiniPlayer: React.FC = () => {
   return (
     <div
       onClick={() => setIsFullPlayerOpen(true)}
-      className="md:hidden fixed bottom-16 left-2 right-2 z-30 rounded-2xl bg-white/90 dark:bg-[#161F33]/90 backdrop-blur-xl border border-slate-200/80 dark:border-slate-700/80 shadow-2xl overflow-hidden cursor-pointer select-none transition-all active:scale-[0.99]"
+      className="md:hidden fixed bottom-16 left-2 right-2 z-30 rounded-2xl bg-white/90 dark:bg-dark-card/90 backdrop-blur-xl border border-slate-200/80 dark:border-dark-border shadow-2xl overflow-hidden cursor-pointer select-none transition-all duration-300 active:scale-[0.99]"
     >
       {/* Top progress indicator */}
       <div className="w-full h-1 bg-slate-200 dark:bg-slate-800">

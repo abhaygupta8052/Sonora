@@ -39,7 +39,7 @@ export const Topbar: React.FC<TopbarProps> = ({ onOpenInstallModal }) => {
   const ThemeIcon = getThemeIcon();
 
   return (
-    <header className="sticky top-0 z-30 flex items-center justify-between h-16 px-4 lg:px-8 bg-white/80 dark:bg-[#090D16]/80 backdrop-blur-xl border-b border-slate-200/60 dark:border-slate-800/60">
+    <header className="sticky top-0 z-30 flex items-center justify-between h-16 px-4 lg:px-8 bg-white/80 dark:bg-dark-bg/85 backdrop-blur-xl border-b border-slate-200/60 dark:border-dark-border transition-colors duration-300">
       {/* Left: Navigation Buttons & Mobile Logo */}
       <div className="flex items-center gap-3">
         {/* Mobile Logo */}

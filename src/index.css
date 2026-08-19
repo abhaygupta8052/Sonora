@@ -11,7 +11,159 @@
 
   body {
     user-select: none;
+    transition: background-color 0.3s ease, color 0.3s ease;
   }
+}
+
+/* ========================================================================= */
+/* 11 Dynamic App Visual Themes                                              */
+/* ========================================================================= */
+
+:root {
+  --theme-accent: #8b5cf6;
+  --theme-accent-hover: #7c3aed;
+  --theme-accent-glow: rgba(139, 92, 246, 0.35);
+  --theme-bg-dark: #090D16;
+  --theme-surface-dark: #0e1424;
+  --theme-card-dark: #161F33;
+  --theme-card-hover: #1e2b45;
+  --theme-border-dark: #232F48;
+  --theme-text-dark: #F8FAFC;
+  --theme-muted-dark: #94A3B8;
+}
+
+/* 1. Classic */
+.theme-classic {
+  --theme-accent: #8b5cf6;
+  --theme-accent-hover: #7c3aed;
+  --theme-accent-glow: rgba(139, 92, 246, 0.35);
+  --theme-bg-dark: #090D16;
+  --theme-surface-dark: #0e1424;
+  --theme-card-dark: #161F33;
+  --theme-card-hover: #1e2b45;
+  --theme-border-dark: #232F48;
+}
+
+/* 2. Neumorphic (Light Warm Mode) */
+.theme-neumorphic {
+  --theme-accent: #a3937a;
+  --theme-accent-hover: #8c7c65;
+  --theme-accent-glow: rgba(163, 147, 122, 0.35);
+  --theme-bg-dark: #ede8df;
+  --theme-surface-dark: #e5dfd3;
+  --theme-card-dark: #f5f2eb;
+  --theme-card-hover: #ece6dc;
+  --theme-border-dark: #d8cebf;
+  --theme-text-dark: #2d261e;
+  --theme-muted-dark: #7a6e60;
+}
+
+/* 3. Vibrant (Bold Electric Purple) */
+.theme-vibrant {
+  --theme-accent: #a855f7;
+  --theme-accent-hover: #9333ea;
+  --theme-accent-glow: rgba(168, 85, 247, 0.45);
+  --theme-bg-dark: #0f051d;
+  --theme-surface-dark: #17082e;
+  --theme-card-dark: #220d40;
+  --theme-card-hover: #30135c;
+  --theme-border-dark: #43197a;
+}
+
+/* 4. Minimal (Deep Navy & Electric Blue) */
+.theme-minimal {
+  --theme-accent: #3b82f6;
+  --theme-accent-hover: #2563eb;
+  --theme-accent-glow: rgba(59, 130, 246, 0.4);
+  --theme-bg-dark: #0b1120;
+  --theme-surface-dark: #0f172a;
+  --theme-card-dark: #162238;
+  --theme-card-hover: #1e2f4d;
+  --theme-border-dark: #243656;
+}
+
+/* 5. Glass Pro (Liquid Oceanic Cyan) */
+.theme-glass-pro {
+  --theme-accent: #0ea5e9;
+  --theme-accent-hover: #0284c7;
+  --theme-accent-glow: rgba(14, 165, 233, 0.4);
+  --theme-bg-dark: #041726;
+  --theme-surface-dark: #08253d;
+  --theme-card-dark: #0d3454;
+  --theme-card-hover: #13466f;
+  --theme-border-dark: #1a5685;
+}
+
+/* 6. Cherry Blossom (Deep Crimson & Rose) */
+.theme-cherry-blossom {
+  --theme-accent: #f43f5e;
+  --theme-accent-hover: #e11d48;
+  --theme-accent-glow: rgba(244, 63, 94, 0.4);
+  --theme-bg-dark: #17040b;
+  --theme-surface-dark: #240713;
+  --theme-card-dark: #360c1d;
+  --theme-card-hover: #4d132b;
+  --theme-border-dark: #631938;
+}
+
+/* 7. Sunset Shades (Warm Apricot & Coral) */
+.theme-sunset-shades {
+  --theme-accent: #f97316;
+  --theme-accent-hover: #ea580c;
+  --theme-accent-glow: rgba(249, 115, 22, 0.4);
+  --theme-bg-dark: #170802;
+  --theme-surface-dark: #240d04;
+  --theme-card-dark: #381608;
+  --theme-card-hover: #4f210d;
+  --theme-border-dark: #692d13;
+}
+
+/* 8. Arc Studio (Emerald Teal & Cyan) */
+.theme-arc-studio {
+  --theme-accent: #06b6d4;
+  --theme-accent-hover: #0891b2;
+  --theme-accent-glow: rgba(6, 182, 212, 0.4);
+  --theme-bg-dark: #021814;
+  --theme-surface-dark: #04241e;
+  --theme-card-dark: #093830;
+  --theme-card-hover: #0e4f44;
+  --theme-border-dark: #14695b;
+}
+
+/* 9. Cosmic Aurora (Midnight Indigo & Lavender) */
+.theme-cosmic-aurora {
+  --theme-accent: #818cf8;
+  --theme-accent-hover: #6366f1;
+  --theme-accent-glow: rgba(129, 140, 248, 0.4);
+  --theme-bg-dark: #070914;
+  --theme-surface-dark: #0d1124;
+  --theme-card-dark: #151b38;
+  --theme-card-hover: #1e274f;
+  --theme-border-dark: #2a366b;
+}
+
+/* 10. Midnight Ember (Zinc Carbon & Coral Ember) */
+.theme-midnight-ember {
+  --theme-accent: #f97316;
+  --theme-accent-hover: #ea580c;
+  --theme-accent-glow: rgba(249, 115, 22, 0.4);
+  --theme-bg-dark: #09090b;
+  --theme-surface-dark: #121215;
+  --theme-card-dark: #1c1c21;
+  --theme-card-hover: #27272e;
+  --theme-border-dark: #383842;
+}
+
+/* 11. Emerald Gold (Forest Green & Gold) */
+.theme-emerald-gold {
+  --theme-accent: #eab308;
+  --theme-accent-hover: #ca8a04;
+  --theme-accent-glow: rgba(234, 179, 8, 0.4);
+  --theme-bg-dark: #04140a;
+  --theme-surface-dark: #082112;
+  --theme-card-dark: #0e331d;
+  --theme-card-hover: #15472a;
+  --theme-border-dark: #1e6139;
 }
 
 /* Custom subtle scrollbar */
@@ -93,4 +245,13 @@ input[type="range"]::-moz-range-thumb {
   background: #ffffff;
   cursor: pointer;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
