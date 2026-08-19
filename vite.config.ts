@@ -19,17 +19,24 @@ export default defineConfig({
         theme_color: '#090D16',
         background_color: '#090D16',
         display: 'standalone',
-        orientation: 'portrait-primary',
+        // Do NOT set orientation — it blocks desktop Chrome from showing install prompt
+        start_url: '/',
+        scope: '/',
+        id: '/',
+        lang: 'en',
+        categories: ['music', 'entertainment'],
         icons: [
           {
             src: '/icons/icon-192.png',
             sizes: '192x192',
-            type: 'image/png'
+            type: 'image/png',
+            purpose: 'any'
           },
           {
             src: '/icons/icon-512.png',
             sizes: '512x512',
-            type: 'image/png'
+            type: 'image/png',
+            purpose: 'any'
           },
           {
             src: '/icons/icon-512.png',
