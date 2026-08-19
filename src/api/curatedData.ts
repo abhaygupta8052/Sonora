@@ -133,17 +133,12 @@ export const CURATED_PLAYLISTS: Playlist[] = [
   }
 ];
 
-// Featured artists — using DiceBear avatar (no hotlink/CORS issues)
-function artistAvatar(name: string) {
-  const seed = name.replace(/\s+/g, '-').toLowerCase();
-  return `https://api.dicebear.com/7.x/personas/svg?seed=${seed}&backgroundColor=7c3aed,6d28d9,4c1d95&backgroundType=gradientLinear`;
-}
-
+// Featured artists with high-quality real artist portrait photos
 export const FEATURED_ARTISTS: Artist[] = [
   {
     id: 'Arijit Singh',
     name: 'Arijit Singh',
-    image: artistAvatar('arijit-singh'),
+    image: 'https://c.saavncdn.com/artists/Arijit_Singh_002_20230323062147_500x500.jpg',
     bio: "India's premier playback singer with billions of streams across romantic and soulful classics.",
     followerCount: 35000000,
     monthlyListeners: '42M',
@@ -154,7 +149,7 @@ export const FEATURED_ARTISTS: Artist[] = [
   {
     id: 'Pawan Singh',
     name: 'Pawan Singh',
-    image: artistAvatar('pawan-singh'),
+    image: 'https://c.saavncdn.com/artists/Pawan_Singh_003_20230516120534_500x500.jpg',
     bio: 'Bhojpuri music superstar and film icon known for energetic folk and modern dance hits.',
     followerCount: 18000000,
     monthlyListeners: '15M',
@@ -165,7 +160,7 @@ export const FEATURED_ARTISTS: Artist[] = [
   {
     id: 'Sidhu Moosewala',
     name: 'Sidhu Moosewala',
-    image: artistAvatar('sidhu-moosewala'),
+    image: 'https://c.saavncdn.com/artists/Sidhu_Moose_Wala_004_20220603093208_500x500.jpg',
     bio: 'Legendary Punjabi rapper and lyricist who transformed modern Desi hip hop.',
     followerCount: 22000000,
     monthlyListeners: '25M',
@@ -176,7 +171,7 @@ export const FEATURED_ARTISTS: Artist[] = [
   {
     id: 'Shreya Ghoshal',
     name: 'Shreya Ghoshal',
-    image: artistAvatar('shreya-ghoshal'),
+    image: 'https://c.saavncdn.com/artists/Shreya_Ghoshal_003_20230419084705_500x500.jpg',
     bio: 'Renowned Indian playback singer celebrated across multiple languages and film industries.',
     followerCount: 28000000,
     monthlyListeners: '35M',
@@ -187,7 +182,7 @@ export const FEATURED_ARTISTS: Artist[] = [
   {
     id: 'AP Dhillon',
     name: 'AP Dhillon',
-    image: artistAvatar('ap-dhillon'),
+    image: 'https://c.saavncdn.com/artists/AP_Dhillon_000_20211119100720_500x500.jpg',
     bio: 'Indo-Canadian Punjabi pop star blending R&B with traditional Punjabi sounds.',
     followerCount: 12000000,
     monthlyListeners: '18M',
@@ -198,7 +193,7 @@ export const FEATURED_ARTISTS: Artist[] = [
   {
     id: 'Khesari Lal Yadav',
     name: 'Khesari Lal Yadav',
-    image: artistAvatar('khesari-lal-yadav'),
+    image: 'https://c.saavncdn.com/artists/Khesari_Lal_Yadav_005_20230516120718_500x500.jpg',
     bio: 'Bhojpuri superstar with chart-topping hit songs and a massive fanbase.',
     followerCount: 14000000,
     monthlyListeners: '12M',
@@ -209,7 +204,7 @@ export const FEATURED_ARTISTS: Artist[] = [
   {
     id: 'Diljit Dosanjh',
     name: 'Diljit Dosanjh',
-    image: artistAvatar('diljit-dosanjh'),
+    image: 'https://c.saavncdn.com/artists/Diljit_Dosanjh_004_20221006074929_500x500.jpg',
     bio: 'Globally acclaimed Punjabi singer and Bollywood actor.',
     followerCount: 20000000,
     monthlyListeners: '22M',
@@ -220,7 +215,7 @@ export const FEATURED_ARTISTS: Artist[] = [
   {
     id: 'Jubin Nautiyal',
     name: 'Jubin Nautiyal',
-    image: artistAvatar('jubin-nautiyal'),
+    image: 'https://c.saavncdn.com/artists/Jubin_Nautiyal_002_20210609084439_500x500.jpg',
     bio: 'Popular Bollywood playback singer known for soulful romantic ballads.',
     followerCount: 10000000,
     monthlyListeners: '14M',
