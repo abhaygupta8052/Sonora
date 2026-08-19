@@ -12,7 +12,7 @@ export const BottomNav: React.FC = () => {
   ];
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-30 h-16 bg-white/90 dark:bg-dark-card/90 backdrop-blur-2xl border-t border-slate-200/80 dark:border-dark-border/80 px-3 flex items-center justify-around select-none transition-colors duration-300 shadow-[0_-4px_25px_rgba(0,0,0,0.15)]">
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-30 h-16 bg-dark-card/95 backdrop-blur-2xl border-t border-dark-border/80 px-3 flex items-center justify-around select-none transition-colors duration-300 shadow-[0_-4px_30px_rgba(0,0,0,0.4)]">
       {tabs.map((tab) => {
         const Icon = tab.icon;
         return (
@@ -22,8 +22,8 @@ export const BottomNav: React.FC = () => {
             className={({ isActive }) =>
               `relative flex flex-col items-center justify-center gap-1 w-14 py-1.5 rounded-xl transition-all duration-200 active:scale-95 ${
                 isActive
-                  ? 'text-brand-600 dark:text-brand-400 font-bold scale-105'
-                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
+                  ? 'text-brand-400 font-bold scale-105'
+                  : 'text-slate-400 hover:text-white'
               }`
             }
           >

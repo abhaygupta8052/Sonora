@@ -24,10 +24,10 @@ export const MiniPlayer: React.FC = () => {
   return (
     <div
       onClick={() => setIsFullPlayerOpen(true)}
-      className="md:hidden fixed bottom-[4.25rem] left-2.5 right-2.5 z-30 rounded-2xl bg-white/95 dark:bg-dark-card/95 backdrop-blur-2xl border border-slate-200/90 dark:border-white/10 shadow-[0_8px_30px_rgba(0,0,0,0.35)] overflow-hidden cursor-pointer select-none transition-all duration-300 active:scale-[0.98]"
+      className="md:hidden fixed bottom-[4.25rem] left-2.5 right-2.5 z-30 rounded-2xl bg-dark-card/95 backdrop-blur-2xl border border-white/10 shadow-[0_12px_40px_rgba(0,0,0,0.6)] overflow-hidden cursor-pointer select-none transition-all duration-300 active:scale-[0.98]"
     >
       {/* Top progress indicator bar */}
-      <div className="w-full h-1 bg-slate-200/60 dark:bg-slate-800/80 overflow-hidden">
+      <div className="w-full h-1 bg-slate-800/80 overflow-hidden">
         <div
           className="h-full bg-gradient-to-r from-brand-600 to-pink-500 transition-all duration-200 ease-out"
           style={{ width: `${progressPercent}%` }}
@@ -37,7 +37,7 @@ export const MiniPlayer: React.FC = () => {
       <div className="flex items-center justify-between p-2.5 gap-3">
         {/* Artwork + Title & Artist */}
         <div className="flex items-center gap-3 min-w-0 flex-1">
-          <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-slate-900 shadow-md shrink-0 ring-1 ring-white/10">
+          <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-slate-900 shadow-md shrink-0 ring-1 ring-white/15">
             <img
               src={currentTrack.artwork}
               alt={currentTrack.title}
@@ -51,10 +51,10 @@ export const MiniPlayer: React.FC = () => {
           </div>
 
           <div className="min-w-0 flex-1">
-            <p title={currentTrack.title} className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100 truncate leading-tight">
+            <p title={currentTrack.title} className="text-xs sm:text-sm font-extrabold text-white truncate leading-tight">
               {currentTrack.title}
             </p>
-            <p title={currentTrack.artist} className="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
+            <p title={currentTrack.artist} className="text-[11px] font-medium text-slate-400 truncate mt-0.5">
               {currentTrack.artist}
             </p>
           </div>
@@ -84,7 +84,7 @@ export const MiniPlayer: React.FC = () => {
 
           <button
             onClick={next}
-            className="p-2 text-slate-400 hover:text-slate-200 transition-colors active:scale-90"
+            className="p-2 text-slate-400 hover:text-white transition-colors active:scale-90"
             aria-label="Next song"
           >
             <SkipForward className="w-4 h-4 sm:w-5 sm:h-5" />

@@ -30,7 +30,7 @@ export const ArtistCard: React.FC<ArtistCardProps> = ({ artist }) => {
   return (
     <Link
       to={`/artist/${encodeURIComponent(artist.id)}`}
-      className="group flex flex-col items-center text-center p-2.5 sm:p-4 rounded-2xl bg-white/40 dark:bg-dark-card/40 hover:bg-white dark:hover:bg-dark-card border border-slate-200/60 dark:border-slate-800/60 hover:border-brand-500/40 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 overflow-hidden shrink-0 snap-start w-28 sm:w-auto"
+      className="group flex flex-col items-center text-center p-2.5 sm:p-4 rounded-2xl bg-dark-card/60 hover:bg-dark-card border border-dark-border/60 hover:border-brand-500/40 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 overflow-hidden shrink-0 snap-start w-28 sm:w-auto"
     >
       {/* Avatar Container — sized to fit card container with no horizontal overflow */}
       <div className="relative w-16 h-16 sm:w-20 sm:h-20 mb-2.5 shrink-0 max-w-full aspect-square">

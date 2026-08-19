@@ -38,8 +38,8 @@ export const SongCard: React.FC<SongCardProps> = ({
       onClick={handlePlayClick}
       className={`group relative flex flex-col p-2.5 sm:p-3 rounded-2xl transition-all duration-300 cursor-pointer select-none shrink-0 snap-start w-36 sm:w-auto ${
         isCurrent
-          ? 'bg-brand-500/10 dark:bg-brand-900/30 border border-brand-500/30 shadow-lg shadow-brand-500/10'
-          : 'bg-white/60 dark:bg-dark-card/60 hover:bg-white dark:hover:bg-dark-card border border-slate-200/60 dark:border-slate-800/60 hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-xl hover:-translate-y-1'
+          ? 'bg-brand-500/15 border border-brand-500/40 shadow-lg shadow-brand-500/15'
+          : 'bg-dark-card/70 hover:bg-dark-card border border-dark-border/60 hover:border-brand-500/40 hover:shadow-xl hover:-translate-y-1'
       }`}
     >
       {/* Artwork Container */}
@@ -106,17 +106,17 @@ export const SongCard: React.FC<SongCardProps> = ({
         <div className="min-w-0 flex-1">
           <h4
             title={track.title}
-            className={`text-xs sm:text-sm font-bold line-clamp-2 leading-tight min-h-[2.4rem] ${
+            className={`font-bold text-xs sm:text-sm line-clamp-2 leading-tight min-h-[2.4rem] transition-colors ${
               isCurrent
-                ? 'text-brand-600 dark:text-brand-400'
-                : 'text-slate-900 dark:text-slate-100 group-hover:text-brand-500 transition-colors'
+                ? 'text-brand-400'
+                : 'text-white group-hover:text-brand-400'
             }`}
           >
             {track.title}
           </h4>
           <p
             title={track.artist}
-            className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 truncate mt-1"
+            className="text-[11px] sm:text-xs text-slate-400 group-hover:text-slate-300 truncate"
           >
             {track.artistId ? (
               <Link

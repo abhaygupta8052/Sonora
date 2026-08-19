@@ -160,7 +160,7 @@ export const SettingsPage: React.FC = () => {
       {/* ========================================================================= */}
       {/* 1. PLAYER APPEARANCE & APP THEME (From User Screenshot)                   */}
       {/* ========================================================================= */}
-      <section className="bg-white dark:bg-dark-card rounded-2xl p-4 sm:p-6 border border-slate-200/80 dark:border-slate-800 space-y-6 shadow-sm">
+      <section className="bg-dark-card rounded-2xl p-4 sm:p-6 border border-dark-border space-y-6 shadow-sm">
         {/* Header */}
         <div className="flex items-start gap-3">
           <div className="p-2.5 rounded-xl bg-brand-500/10 dark:bg-brand-500/20 text-brand-600 dark:text-brand-400 shrink-0">
@@ -239,7 +239,7 @@ export const SettingsPage: React.FC = () => {
       </section>
 
       {/* Base Light/Dark Mode Section */}
-      <section className="bg-white dark:bg-dark-card rounded-2xl p-4 sm:p-6 border border-slate-200/80 dark:border-slate-800 space-y-4">
+      <section className="bg-dark-card rounded-2xl p-4 sm:p-6 border border-dark-border space-y-4">
         <h3 className="font-bold text-sm sm:text-base text-slate-900 dark:text-white">
           Base Color Mode
         </h3>
@@ -274,7 +274,7 @@ export const SettingsPage: React.FC = () => {
       </section>
 
       {/* Audio & Playback Section */}
-      <section className="bg-white dark:bg-dark-card rounded-2xl p-4 sm:p-6 border border-slate-200/80 dark:border-slate-800 space-y-5">
+      <section className="bg-dark-card rounded-2xl p-4 sm:p-6 border border-dark-border space-y-5">
         <h3 className="font-bold text-sm sm:text-base text-slate-900 dark:text-white">
           Playback & Audio Quality
         </h3>
@@ -333,7 +333,7 @@ export const SettingsPage: React.FC = () => {
       </section>
 
       {/* Keyboard Shortcuts Reference */}
-      <section className="bg-white dark:bg-dark-card rounded-2xl p-4 sm:p-6 border border-slate-200/80 dark:border-slate-800 space-y-4">
+      <section className="bg-dark-card rounded-2xl p-4 sm:p-6 border border-dark-border space-y-4">
         <div className="flex items-center gap-2">
           <Keyboard className="w-5 h-5 text-brand-500" />
           <h3 className="font-bold text-sm sm:text-base text-slate-900 dark:text-white">
@@ -363,7 +363,7 @@ export const SettingsPage: React.FC = () => {
       </section>
 
       {/* Data & Backup Management */}
-      <section className="bg-white dark:bg-dark-card rounded-2xl p-4 sm:p-6 border border-slate-200/80 dark:border-slate-800 space-y-5">
+      <section className="bg-dark-card rounded-2xl p-4 sm:p-6 border border-dark-border space-y-5">
         <h3 className="font-bold text-sm sm:text-base text-slate-900 dark:text-white">
           Data & Local Storage
         </h3>

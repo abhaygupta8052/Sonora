@@ -14,7 +14,7 @@ export const PlaylistCard: React.FC<PlaylistCardProps> = ({ playlist }) => {
   const handlePlayDirect = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (playlist.tracks.length > 0) {
+    if (playlist.tracks && playlist.tracks.length > 0) {
       playTrack(playlist.tracks[0], playlist.tracks);
     }
   };
@@ -22,7 +22,7 @@ export const PlaylistCard: React.FC<PlaylistCardProps> = ({ playlist }) => {
   return (
     <Link
       to={`/playlist/${playlist.id}`}
-      className="group relative flex flex-col p-3 rounded-2xl bg-white/40 dark:bg-dark-card/40 hover:bg-white dark:hover:bg-dark-card border border-slate-200/60 dark:border-slate-800/60 hover:border-slate-300 dark:hover:border-slate-700 transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
+      className="group relative flex flex-col p-3 rounded-2xl bg-dark-card/60 hover:bg-dark-card border border-dark-border/60 hover:border-brand-500/40 transition-all duration-300 hover:shadow-lg hover:-translate-y-1 select-none"
     >
       <div className="relative aspect-square w-full rounded-xl overflow-hidden mb-3 bg-slate-900 shadow-md">
         <img
@@ -44,11 +44,11 @@ export const PlaylistCard: React.FC<PlaylistCardProps> = ({ playlist }) => {
         )}
       </div>
 
-      <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100 truncate group-hover:text-brand-500 transition-colors">
+      <h4 className="text-sm font-semibold text-white truncate group-hover:text-brand-400 transition-colors">
         {playlist.title}
       </h4>
 
-      <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-1 mt-0.5">
+      <p className="text-xs text-slate-400 line-clamp-1 mt-0.5">
         {playlist.description || `${playlist.trackCount || playlist.tracks?.length || 0} songs`}
       </p>
     </Link>

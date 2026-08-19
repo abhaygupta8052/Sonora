@@ -11,7 +11,7 @@ export const AlbumCard: React.FC<AlbumCardProps> = ({ album }) => {
   return (
     <Link
       to={`/album/${album.id}`}
-      className="group flex flex-col p-3 rounded-2xl bg-white/40 dark:bg-dark-card/40 hover:bg-white dark:hover:bg-dark-card border border-slate-200/60 dark:border-slate-800/60 hover:border-slate-300 dark:hover:border-slate-700 transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
+      className="group flex flex-col p-3 rounded-2xl bg-dark-card/60 hover:bg-dark-card border border-dark-border/60 hover:border-brand-500/40 transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
     >
       <div className="relative aspect-square w-full rounded-xl overflow-hidden mb-3 bg-slate-900 shadow-md">
         <img

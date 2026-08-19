@@ -47,7 +47,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onOpenInstallModal }) => {
 
   return (
     <>
-      <aside className="hidden md:flex flex-col w-64 lg:w-72 bg-white dark:bg-dark-surface border-r border-slate-200/80 dark:border-dark-border p-5 shrink-0 select-none h-screen sticky top-0 transition-colors duration-300">
+      <aside className="hidden md:flex flex-col w-64 lg:w-72 bg-dark-surface border-r border-dark-border/80 p-5 shrink-0 select-none h-screen sticky top-0 transition-colors duration-300">
         {/* Brand Logo */}
         <Link to="/" className="flex items-center gap-3 px-2 py-3 mb-6 group">
           <div className="w-10 h-10 rounded-2xl bg-black border border-slate-700/60 overflow-hidden flex items-center justify-center shadow-lg shadow-brand-500/20 group-hover:scale-105 transition-transform shrink-0">
