@@ -10,7 +10,7 @@ export const Skeleton: React.FC<{ className?: string }> = ({ className = '' }) =
 
 export const SongCardSkeleton: React.FC = () => {
   return (
-    <div className="flex flex-col gap-3 p-3 rounded-2xl bg-white/40 dark:bg-dark-card/40 border border-slate-200/50 dark:border-slate-800/50">
+    <div className="flex flex-col gap-3 p-3 rounded-2xl bg-white/40 dark:bg-dark-card/40 border border-slate-200/50 dark:border-slate-800/50 w-[155px] sm:w-auto shrink-0 snap-center">
       <Skeleton className="w-full aspect-square rounded-xl" />
       <Skeleton className="h-4 w-3/4" />
       <Skeleton className="h-3 w-1/2" />

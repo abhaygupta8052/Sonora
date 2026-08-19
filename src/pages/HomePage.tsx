@@ -156,7 +156,7 @@ export const HomePage: React.FC = () => {
   return (
     <div className="space-y-8 animate-fade-in">
       {/* Category Pills Filter Bar */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none sticky top-16 z-20 bg-dark-bg/90 backdrop-blur-md py-2 -mx-4 px-4 sm:-mx-6 sm:px-6">
+      <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none sticky top-16 z-20 bg-slate-50/95 dark:bg-dark-bg/95 backdrop-blur-md py-2 -mx-4 px-4 sm:-mx-6 sm:px-6 border-b border-transparent">
         <button
           onClick={() => setActiveFilter('all')}
           className={`px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all ${
@@ -220,7 +220,7 @@ export const HomePage: React.FC = () => {
             </button>
           </div>
 
-          <div className="flex sm:grid sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4 overflow-x-auto sm:overflow-visible pb-2 sm:pb-0 scrollbar-none snap-x -mx-4 px-4 sm:mx-0 sm:px-0">
+          <div className="flex gap-3 sm:grid sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 sm:gap-4 overflow-x-auto sm:overflow-visible pb-3 sm:pb-0 scrollbar-none snap-x snap-mandatory -mx-4 px-4 sm:mx-0 sm:px-0">
             {recentlyPlayed.slice(0, 6).map((track) => (
               <SongCard
                 key={`top-recent-${track.id}`}
@@ -288,19 +288,19 @@ export const HomePage: React.FC = () => {
 
         return (
           <section key={sec.id} className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-xl font-bold text-slate-900 dark:text-white">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0">
+                <h3 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white line-clamp-1">
                   {sec.name}
                 </h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-2">
                   {sec.subtitle}
                 </p>
               </div>
 
               <button
                 onClick={() => navigate(`/search?q=${encodeURIComponent(sec.query)}`)}
-                className="inline-flex items-center gap-1 text-xs font-bold text-brand-600 dark:text-brand-400 hover:underline"
+                className="inline-flex items-center gap-1 text-xs font-bold text-brand-600 dark:text-brand-400 hover:underline shrink-0 whitespace-nowrap"
               >
                 <span>See All</span>
                 <ChevronRight className="w-4 h-4" />
@@ -308,13 +308,13 @@ export const HomePage: React.FC = () => {
             </div>
 
             {isLoading || tracks.length === 0 ? (
-              <div className="flex sm:grid sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4 overflow-x-auto sm:overflow-visible pb-2 sm:pb-0 scrollbar-none snap-x -mx-4 px-4 sm:mx-0 sm:px-0">
+            <div className="flex gap-3 sm:grid sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 sm:gap-4 overflow-x-auto sm:overflow-visible pb-3 sm:pb-0 scrollbar-none snap-x snap-mandatory -mx-4 px-4 sm:mx-0 sm:px-0">
                 {Array.from({ length: 6 }).map((_, i) => (
                   <SongCardSkeleton key={i} />
                 ))}
               </div>
             ) : (
-              <div className="flex sm:grid sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4 overflow-x-auto sm:overflow-visible pb-2 sm:pb-0 scrollbar-none snap-x -mx-4 px-4 sm:mx-0 sm:px-0">
+            <div className="flex gap-3 sm:grid sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 sm:gap-4 overflow-x-auto sm:overflow-visible pb-3 sm:pb-0 scrollbar-none snap-x snap-mandatory -mx-4 px-4 sm:mx-0 sm:px-0">
                 {tracks.slice(0, 6).map((track) => (
                   <SongCard
                     key={`${sec.id}-${track.id}`}
@@ -364,7 +364,7 @@ export const HomePage: React.FC = () => {
             </button>
           </form>
 
-          <div className="flex sm:grid sm:grid-cols-4 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-8 gap-3 sm:gap-4 overflow-x-auto sm:overflow-visible pb-2 sm:pb-0 scrollbar-none snap-x -mx-4 px-4 sm:mx-0 sm:px-0">
+          <div className="flex gap-3 sm:grid sm:grid-cols-4 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-8 sm:gap-4 overflow-x-auto sm:overflow-visible pb-3 sm:pb-0 scrollbar-none snap-x snap-mandatory -mx-4 px-4 sm:mx-0 sm:px-0">
             {FEATURED_ARTISTS.map((artist) => (
               <ArtistCard key={artist.id} artist={artist} />
             ))}

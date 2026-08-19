@@ -40,7 +40,7 @@ export const SongCard: React.FC<SongCardProps> = ({
   return (
     <div
       onClick={handleCardClick}
-      className={`group relative flex flex-col p-2.5 sm:p-3 rounded-2xl transition-all duration-300 cursor-pointer overflow-hidden ${
+      className={`group relative flex flex-col p-2.5 sm:p-3 rounded-2xl transition-all duration-300 cursor-pointer overflow-hidden snap-center w-[155px] sm:w-auto shrink-0 sm:shrink ${
         isCurrent
           ? 'bg-brand-500/10 dark:bg-brand-500/20 border border-brand-500/40 shadow-lg shadow-brand-500/10'
           : 'bg-white dark:bg-dark-card hover:bg-slate-50 dark:hover:bg-slate-800/80 border border-slate-200/80 dark:border-dark-border/80 hover:border-slate-300 dark:hover:border-slate-700 shadow-sm hover:shadow-md'
