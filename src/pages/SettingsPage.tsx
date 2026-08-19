@@ -477,7 +477,7 @@ export const SettingsPage: React.FC = () => {
           <ShieldCheck className="w-5 h-5 text-brand-500 shrink-0" />
           <span>Sonora v1.0.0 • Free Progressive Web App</span>
         </div>
-        <span className="font-semibold text-brand-500">PWA Ready</span>
+        <span className="font-bold text-brand-500">Powered by Abhay Gupta</span>
       </section>
 
       {/* PWA Install Modal */}

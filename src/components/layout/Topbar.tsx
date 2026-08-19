@@ -47,9 +47,14 @@ export const Topbar: React.FC<TopbarProps> = ({ onOpenInstallModal }) => {
           <div className="w-8 h-8 rounded-xl bg-black border border-slate-700/60 overflow-hidden flex items-center justify-center shadow-md shrink-0">
             <img src="/logo.png" alt="Sonora Logo" className="w-full h-full object-contain p-0.5" />
           </div>
-          <span className="font-extrabold text-base tracking-tight text-slate-900 dark:text-white">
-            Sonora
-          </span>
+          <div>
+            <span className="font-extrabold text-base tracking-tight text-slate-900 dark:text-white block leading-tight">
+              Sonora
+            </span>
+            <span className="text-[9px] font-semibold text-brand-500 block -mt-0.5">
+              Powered by Abhay Gupta
+            </span>
+          </div>
         </Link>
 
         {/* History Nav */}

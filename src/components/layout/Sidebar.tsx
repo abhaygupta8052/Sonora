@@ -57,8 +57,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ onOpenInstallModal }) => {
             <h1 className="font-extrabold text-xl tracking-tight text-slate-900 dark:text-white group-hover:text-brand-500 transition-colors">
               Sonora
             </h1>
-            <span className="text-[10px] uppercase font-bold tracking-widest text-brand-500">
-              Music Stream
+            <span className="text-[10px] font-semibold text-brand-500 block -mt-0.5">
+              Powered by Abhay Gupta
             </span>
           </div>
         </Link>
@@ -161,7 +161,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onOpenInstallModal }) => {
             <Sparkles className="w-4 h-4 text-brand-500 shrink-0" />
             <div className="min-w-0">
               <p className="text-xs font-bold text-slate-800 dark:text-slate-200">100% Free & Unlimited</p>
-              <p className="text-[10px] text-slate-400">No account required</p>
+              <p className="text-[10px] text-brand-500 font-medium">Powered by Abhay Gupta</p>
             </div>
           </div>
         </div>
