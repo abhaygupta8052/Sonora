@@ -36,7 +36,7 @@ export const SongCard: React.FC<SongCardProps> = ({
   return (
     <div
       onClick={handlePlayClick}
-      className={`group relative flex flex-col p-3 rounded-2xl transition-all duration-300 cursor-pointer select-none ${
+      className={`group relative flex flex-col p-2.5 sm:p-3 rounded-2xl transition-all duration-300 cursor-pointer select-none shrink-0 snap-start w-36 sm:w-auto ${
         isCurrent
           ? 'bg-brand-500/10 dark:bg-brand-900/30 border border-brand-500/30 shadow-lg shadow-brand-500/10'
           : 'bg-white/60 dark:bg-dark-card/60 hover:bg-white dark:hover:bg-dark-card border border-slate-200/60 dark:border-slate-800/60 hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-xl hover:-translate-y-1'
