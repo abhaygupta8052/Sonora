@@ -111,10 +111,14 @@ export const HomePage: React.FC = () => {
   const { recentlyPlayed } = useLibrary();
 
   const [activeFilter, setActiveFilter] = useState('all');
-  const [featuredTrack, setFeaturedTrack] = useState<Track | null>(null);
   const [sectionTracks, setSectionTracks] = useState<Record<string, Track[]>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [selectedTrackForPlaylist, setSelectedTrackForPlaylist] = useState<Track | null>(null);
+
+  // Derive the hero banner track from the active filter (reactive)
+  const activeSectionConfig = TRENDING_SECTIONS.find((s) => s.id === activeFilter) ?? TRENDING_SECTIONS[0];
+  const activeSectionTracks = sectionTracks[activeSectionConfig.id] || [];
+  const featuredTrack = activeSectionTracks[0] ?? null;
 
   useEffect(() => {
     let mounted = true;
@@ -134,13 +138,6 @@ export const HomePage: React.FC = () => {
             trackMap[r.id] = r.tracks;
           });
           setSectionTracks(trackMap);
-
-          // Set hero track
-          if (trackMap['hindi'] && trackMap['hindi'].length > 0) {
-            setFeaturedTrack(trackMap['hindi'][0]);
-          } else if (results[0]?.tracks[0]) {
-            setFeaturedTrack(results[0].tracks[0]);
-          }
         }
       } catch (err) {
         console.error('Failed to load trending music', err);
@@ -236,27 +233,37 @@ export const HomePage: React.FC = () => {
         </section>
       )}
 
-      {/* Hero Featured Stream Banner */}
+      {/* Hero Featured Stream Banner — updates per active section */}
       {featuredTrack ? (
-        <section className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-brand-900 via-indigo-950 to-slate-900 text-white p-6 sm:p-8 lg:p-10 border border-brand-500/20 shadow-2xl">
+        <section
+          className="relative overflow-hidden rounded-3xl text-white p-6 sm:p-8 lg:p-10 border shadow-2xl transition-all duration-500"
+          style={{
+            background: `linear-gradient(135deg, var(--banner-from, #1e1b4b) 0%, #0f172a 100%)`,
+            borderColor: 'rgba(255,255,255,0.08)'
+          }}
+        >
+          {/* Dynamic gradient blob matching the section colour */}
           <div
-            className="absolute -right-20 -bottom-20 w-96 h-96 rounded-full bg-brand-500/20 blur-3xl pointer-events-none"
+            className={`absolute -right-20 -bottom-20 w-96 h-96 rounded-full blur-3xl pointer-events-none opacity-30 bg-gradient-to-br ${activeSectionConfig.gradient}`}
           />
           <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="max-w-xl space-y-3 text-center md:text-left">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-500/20 border border-brand-400/30 text-brand-300 text-xs font-bold uppercase tracking-wider">
+              {/* Section badge — matches current filter */}
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-white/90 text-xs font-bold uppercase tracking-wider">
                 <Sparkles className="w-3.5 h-3.5" />
-                <span>Trending Hit</span>
+                <span>{activeSectionConfig.badge}</span>
               </div>
-              <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight">
+              <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight line-clamp-2">
                 {featuredTrack.title}
               </h2>
               <p className="text-slate-300 text-sm sm:text-base line-clamp-2">
-                By <strong className="text-white">{featuredTrack.artist}</strong> {featuredTrack.album && `• ${featuredTrack.album}`}
+                By <strong className="text-white">{featuredTrack.artist}</strong>{' '}
+                {featuredTrack.album && `• ${featuredTrack.album}`}
               </p>
+              <p className="text-xs text-white/50 italic">{activeSectionConfig.subtitle}</p>
               <div className="pt-2 flex items-center justify-center md:justify-start gap-3">
                 <button
-                  onClick={() => playTrack(featuredTrack, sectionTracks['hindi'] || [featuredTrack], 0)}
+                  onClick={() => playTrack(featuredTrack, activeSectionTracks, 0)}
                   className="flex items-center gap-2 px-6 py-3 rounded-full bg-white text-slate-950 font-bold text-sm shadow-xl hover:bg-brand-50 hover:scale-105 active:scale-95 transition-all"
                 >
                   <Play className="w-4 h-4 fill-slate-950 ml-0.5" />
