@@ -67,7 +67,7 @@ export const DropdownMenu: React.FC<DropdownMenuProps> = ({
       {isOpen && (
         <div
           onClick={(e) => e.stopPropagation()}
-          className="absolute right-0 bottom-full sm:bottom-auto sm:top-full mb-2 sm:mb-0 sm:mt-1 w-48 rounded-xl bg-white dark:bg-[#1A2338] border border-slate-200 dark:border-slate-700/80 shadow-2xl py-1.5 z-40 animate-scale-up"
+          className="absolute right-0 bottom-full sm:bottom-auto sm:top-full mb-2 sm:mb-0 sm:mt-1 w-48 rounded-xl bg-white dark:bg-dark-card border border-slate-200 dark:border-dark-border shadow-2xl py-1.5 z-40 animate-scale-up"
         >
           <button
             onClick={() => {

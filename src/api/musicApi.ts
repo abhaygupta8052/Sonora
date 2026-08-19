@@ -327,13 +327,17 @@ async function searchSaavn(trimmed: string): Promise<{ tracks: Track[]; artists:
 }
 
 async function trendingSaavn(query: string): Promise<Track[]> {
-  // Try proxy first
+  const currentYear = new Date().getFullYear();
+  const randomPage = Math.floor(Math.random() * 2) + 1; // page 1 or 2 to rotate on refresh
+  const dynamicQuery = query.includes(String(currentYear)) ? query : `${query} ${currentYear}`;
+
+  // 1. Try our own Vercel proxy first
   try {
-    const params = `?__call=search.getResults&_format=json&p=1&n=25&q=${encodeURIComponent(query)}`;
+    const params = `?__call=search.getResults&_format=json&p=${randomPage}&n=30&q=${encodeURIComponent(dynamicQuery)}`;
     const res = await fetch(`${SAAVN_PROXY}${params}`, { signal: AbortSignal.timeout(6000) });
     if (res.ok) {
       const data = await res.json();
-      if (data.results && Array.isArray(data.results) && data.results.length > 0) {
+      if (data.results && Array.isArray(data.results)) {
         const rawTracks = data.results.map(normalizeOfficialSong).filter((t: Track) => !!t.streamUrl);
         const tracks = deduplicateTracks(rawTracks);
         if (tracks.length > 0) return tracks;
@@ -346,7 +350,7 @@ async function trendingSaavn(query: string): Promise<Track[]> {
   // Community mirrors
   for (const endpoint of BACKUP_ENDPOINTS) {
     try {
-      const res = await fetch(`${endpoint}/search/songs?query=${encodeURIComponent(query)}&limit=25`, {
+      const res = await fetch(`${endpoint}/search/songs?query=${encodeURIComponent(dynamicQuery)}&page=${randomPage}&limit=30`, {
         signal: AbortSignal.timeout(5000),
       });
       if (res.ok) {

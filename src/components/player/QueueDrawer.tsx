@@ -29,9 +29,9 @@ export const QueueDrawer: React.FC = () => {
       />
 
       {/* Drawer panel */}
-      <aside className="relative z-10 w-full max-w-md h-full bg-white dark:bg-[#111726] border-l border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col animate-slide-left">
+      <aside className="relative z-10 w-full max-w-md h-full bg-white dark:bg-dark-surface border-l border-slate-200 dark:border-dark-border shadow-2xl flex flex-col animate-slide-left transition-colors duration-300">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-800">
+        <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-dark-border">
           <div className="flex items-center gap-2">
             <ListMusic className="w-5 h-5 text-brand-500" />
             <h3 className="font-bold text-base text-slate-900 dark:text-white">

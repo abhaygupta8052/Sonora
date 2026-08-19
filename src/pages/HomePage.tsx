@@ -14,7 +14,8 @@ import {
   ChevronRight,
   Music,
   Search,
-  UserSearch
+  UserSearch,
+  RotateCw
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -89,6 +90,8 @@ export const HomePage: React.FC = () => {
   const [selectedTrackForPlaylist, setSelectedTrackForPlaylist] = useState<Track | null>(null);
   const [artistSearch, setArtistSearch] = useState('');
 
+  const [refreshKey, setRefreshKey] = useState(0);
+
   // Derive the hero banner track from the active filter (reactive)
   const activeSectionConfig = TRENDING_SECTIONS.find((s) => s.id === activeFilter) ?? TRENDING_SECTIONS[0];
   const activeSectionTracks = sectionTracks[activeSectionConfig.id] || [];
@@ -126,10 +129,17 @@ export const HomePage: React.FC = () => {
     };
 
     loadAllSections();
+
+    // Auto-refresh recommendations every 10 minutes
+    const interval = setInterval(() => {
+      loadAllSections();
+    }, 10 * 60 * 1000);
+
     return () => {
       mounted = false;
+      clearInterval(interval);
     };
-  }, []);
+  }, [refreshKey]);
 
   const handleArtistSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -171,6 +181,16 @@ export const HomePage: React.FC = () => {
             {sec.badge}
           </button>
         ))}
+
+        {/* Refresh / Shuffle New Songs Button */}
+        <button
+          onClick={() => setRefreshKey((k) => k + 1)}
+          title="Refresh recommendations with fresh trending songs"
+          className="ml-auto px-3 py-2 rounded-full bg-slate-100 dark:bg-dark-card hover:bg-brand-500/10 text-slate-600 dark:text-slate-400 hover:text-brand-500 border border-slate-200/80 dark:border-slate-800 text-xs font-bold whitespace-nowrap flex items-center gap-1.5 transition-all shrink-0 active:scale-95"
+        >
+          <RotateCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin text-brand-500' : ''}`} />
+          <span className="hidden sm:inline">Refresh Songs</span>
+        </button>
       </div>
 
       {/* ========================================================================= */}
