@@ -1,31 +1,31 @@
-import React from 'react';
-import { Play, Pause, Heart } from 'lucide-react';
+import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { Play, Pause } from 'lucide-react';
 import { Track } from '../../api/types';
 import { useAudioPlayer } from '../../context/AudioPlayerContext';
-import { useLibrary } from '../../context/LibraryContext';
 import { DropdownMenu } from '../common/DropdownMenu';
-import { Link } from 'react-router-dom';
+import { safeString } from '../../api/musicApi';
 
 interface SongCardProps {
   track: Track;
   queueContext?: Track[];
   onOpenPlaylistModal?: (track: Track) => void;
+  aspectRatio?: 'square' | 'video';
 }
 
 export const SongCard: React.FC<SongCardProps> = ({
   track,
   queueContext,
-  onOpenPlaylistModal
+  onOpenPlaylistModal,
+  aspectRatio = 'square',
 }) => {
   const { currentTrack, isPlaying, playTrack, togglePlayPause } = useAudioPlayer();
-  const { isFavorite, toggleFavorite } = useLibrary();
+  const [imgLoaded, setImgLoaded] = useState(false);
 
   const isCurrent = currentTrack?.id === track.id;
   const isCurrentPlaying = isCurrent && isPlaying;
-  const isFav = isFavorite(track.id);
 
-  const handlePlayClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleCardClick = () => {
     if (isCurrent) {
       togglePlayPause();
     } else {
@@ -33,101 +33,78 @@ export const SongCard: React.FC<SongCardProps> = ({
     }
   };
 
+  const titleStr = safeString(track.title) || 'Untitled Song';
+  const artistStr = safeString(track.artist) || 'Unknown Artist';
+  const artistIdStr = safeString(track.artistId);
+
   return (
     <div
-      onClick={handlePlayClick}
-      className={`group relative flex flex-col p-2.5 sm:p-3 rounded-2xl transition-all duration-300 cursor-pointer select-none shrink-0 snap-start w-36 sm:w-auto ${
+      onClick={handleCardClick}
+      className={`group relative flex flex-col p-2.5 sm:p-3 rounded-2xl transition-all duration-300 cursor-pointer overflow-hidden ${
         isCurrent
-          ? 'bg-brand-500/15 border border-brand-500/40 shadow-lg shadow-brand-500/15'
-          : 'bg-white/80 dark:bg-dark-card/70 hover:bg-white dark:hover:bg-dark-card border border-slate-200/80 dark:border-dark-border/60 hover:border-brand-500/40 hover:shadow-xl hover:-translate-y-1'
+          ? 'bg-brand-500/10 dark:bg-brand-500/20 border border-brand-500/40 shadow-lg shadow-brand-500/10'
+          : 'bg-white dark:bg-dark-card hover:bg-slate-50 dark:hover:bg-slate-800/80 border border-slate-200/80 dark:border-dark-border/80 hover:border-slate-300 dark:hover:border-slate-700 shadow-sm hover:shadow-md'
       }`}
     >
       {/* Artwork Container */}
-      <div className="relative aspect-square w-full rounded-xl overflow-hidden bg-slate-900 mb-3">
+      <div
+        className={`relative w-full rounded-xl overflow-hidden mb-2 sm:mb-3 bg-slate-800 shrink-0 ${
+          aspectRatio === 'video' ? 'aspect-video' : 'aspect-square'
+        }`}
+      >
         <img
-          src={track.artwork}
-          alt={track.title}
+          src={track.artwork || 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=600&auto=format&fit=crop&q=80'}
+          alt={titleStr}
           loading="lazy"
-          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+          className={`w-full h-full object-cover transition-transform duration-500 ${
+            imgLoaded ? 'opacity-100 scale-100' : 'opacity-0 scale-105'
+          } group-hover:scale-105`}
+          onLoad={() => setImgLoaded(true)}
         />
 
-        {/* Gradient Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-
-        {/* Favorite Quick Button */}
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            toggleFavorite(track);
-          }}
-          className={`absolute top-2 right-2 p-2 rounded-full backdrop-blur-md transition-all duration-200 ${
-            isFav
-              ? 'bg-rose-500/20 text-rose-500 opacity-100'
-              : 'bg-black/40 text-white/80 opacity-0 group-hover:opacity-100 hover:text-white hover:scale-110'
-          }`}
-          aria-label={isFav ? 'Remove favorite' : 'Add favorite'}
-        >
-          <Heart className={`w-4 h-4 ${isFav ? 'fill-rose-500' : ''}`} />
-        </button>
-
-        {/* Play / Pause Floating Button */}
+        {/* Hover / Playing Overlay */}
         <div
-          className={`absolute bottom-3 right-3 transition-all duration-300 ${
-            isCurrent
-              ? 'opacity-100 translate-y-0'
-              : 'opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0'
+          className={`absolute inset-0 bg-black/40 backdrop-blur-[2px] flex items-center justify-center transition-opacity duration-300 ${
+            isCurrentPlaying ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
           }`}
         >
-          <button
-            onClick={handlePlayClick}
-            className="w-10 h-10 rounded-full bg-brand-600 hover:bg-brand-500 text-white flex items-center justify-center shadow-lg shadow-brand-600/40 active:scale-95 transition-transform"
-            aria-label={isCurrentPlaying ? 'Pause' : 'Play'}
-          >
+          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-brand-600 text-white flex items-center justify-center shadow-lg transform transition-transform duration-300 hover:scale-110 active:scale-95">
             {isCurrentPlaying ? (
-              <Pause className="w-5 h-5 fill-white" />
+              <Pause className="w-5 h-5 fill-white text-white" />
             ) : (
-              <Play className="w-5 h-5 fill-white ml-0.5" />
+              <Play className="w-5 h-5 fill-white text-white ml-0.5" />
             )}
-          </button>
-        </div>
-
-        {/* Active Equalizer Overlay when playing */}
-        {isCurrentPlaying && (
-          <div className="absolute bottom-3 left-3 flex items-end gap-1 px-2 py-1 rounded-full bg-black/60 backdrop-blur-md">
-            <span className="w-1 h-3 bg-brand-400 rounded-full animate-equalizer" style={{ animationDelay: '0ms' }} />
-            <span className="w-1 h-4 bg-brand-400 rounded-full animate-equalizer" style={{ animationDelay: '200ms' }} />
-            <span className="w-1 h-2 bg-brand-400 rounded-full animate-equalizer" style={{ animationDelay: '400ms' }} />
           </div>
-        )}
+        </div>
       </div>
 
-      {/* Metadata */}
-      <div className="flex items-start justify-between gap-1.5 min-w-0 mt-1">
+      {/* Title & Artist & Dropdown */}
+      <div className="flex items-start justify-between gap-1 min-w-0">
         <div className="min-w-0 flex-1">
           <h4
-            title={track.title}
-            className={`font-bold text-xs sm:text-sm line-clamp-2 leading-tight min-h-[2.4rem] transition-colors ${
+            title={titleStr}
+            className={`text-xs sm:text-sm font-bold truncate ${
               isCurrent
                 ? 'text-brand-600 dark:text-brand-400'
                 : 'text-slate-900 dark:text-white group-hover:text-brand-600 dark:group-hover:text-brand-400'
             }`}
           >
-            {track.title}
+            {titleStr}
           </h4>
           <p
-            title={track.artist}
+            title={artistStr}
             className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 group-hover:text-slate-700 dark:group-hover:text-slate-300 truncate"
           >
-            {track.artistId ? (
+            {artistIdStr ? (
               <Link
-                to={`/artist/${track.artistId}`}
+                to={`/artist/${encodeURIComponent(artistIdStr || artistStr)}`}
                 onClick={(e) => e.stopPropagation()}
                 className="hover:underline hover:text-slate-700 dark:hover:text-slate-300"
               >
-                {track.artist}
+                {artistStr}
               </Link>
             ) : (
-              track.artist
+              artistStr
             )}
           </p>
         </div>

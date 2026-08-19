@@ -1,11 +1,12 @@
 import React from 'react';
-import { Play, Pause, Heart } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Play, Heart } from 'lucide-react';
 import { Track } from '../../api/types';
 import { useAudioPlayer } from '../../context/AudioPlayerContext';
 import { useLibrary } from '../../context/LibraryContext';
 import { formatDuration } from '../../utils/formatters';
 import { DropdownMenu } from '../common/DropdownMenu';
-import { Link } from 'react-router-dom';
+import { safeString } from '../../api/musicApi';
 
 interface SongRowProps {
   track: Track;
@@ -20,7 +21,7 @@ export const SongRow: React.FC<SongRowProps> = ({
   index,
   queueContext,
   onOpenPlaylistModal,
-  showAlbum = true
+  showAlbum = true,
 }) => {
   const { currentTrack, isPlaying, playTrack, togglePlayPause } = useAudioPlayer();
   const { isFavorite, toggleFavorite } = useLibrary();
@@ -36,6 +37,12 @@ export const SongRow: React.FC<SongRowProps> = ({
       playTrack(track, queueContext, index !== undefined ? index - 1 : undefined);
     }
   };
+
+  const titleStr = safeString(track.title) || 'Untitled Song';
+  const artistStr = safeString(track.artist) || 'Unknown Artist';
+  const albumStr = safeString(track.album);
+  const artistIdStr = safeString(track.artistId);
+  const albumIdStr = safeString(track.albumId);
 
   return (
     <div
@@ -67,8 +74,8 @@ export const SongRow: React.FC<SongRowProps> = ({
         {/* Artwork */}
         <div className="relative w-11 h-11 rounded-lg overflow-hidden shrink-0 bg-slate-900 shadow-sm">
           <img
-            src={track.artwork}
-            alt={track.title}
+            src={track.artwork || 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=600&auto=format&fit=crop&q=80'}
+            alt={titleStr}
             loading="lazy"
             className="w-full h-full object-cover"
           />
@@ -78,7 +85,7 @@ export const SongRow: React.FC<SongRowProps> = ({
             }`}
           >
             {isCurrentPlaying ? (
-              <Pause className="w-4 h-4 text-white fill-white" />
+              <span className="w-3 h-3 bg-white rounded-sm" />
             ) : (
               <Play className="w-4 h-4 text-white fill-white ml-0.5" />
             )}
@@ -88,42 +95,42 @@ export const SongRow: React.FC<SongRowProps> = ({
         {/* Title & Artist */}
         <div className="min-w-0 flex-1 pr-2">
           <p
-            title={track.title}
+            title={titleStr}
             className={`text-sm font-semibold truncate ${
               isCurrent ? 'text-brand-600 dark:text-brand-400' : 'text-slate-900 dark:text-slate-100 group-hover:text-brand-500 transition-colors'
             }`}
           >
-            {track.title}
+            {titleStr}
           </p>
-          <p title={track.artist} className="text-xs text-slate-500 dark:text-slate-400 truncate">
-            {track.artistId ? (
+          <p title={artistStr} className="text-xs text-slate-500 dark:text-slate-400 truncate">
+            {artistIdStr ? (
               <Link
-                to={`/artist/${track.artistId}`}
+                to={`/artist/${encodeURIComponent(artistIdStr || artistStr)}`}
                 onClick={(e) => e.stopPropagation()}
                 className="hover:underline hover:text-slate-700 dark:hover:text-slate-200"
               >
-                {track.artist}
+                {artistStr}
               </Link>
             ) : (
-              track.artist
+              artistStr
             )}
           </p>
         </div>
       </div>
 
       {/* Center section: Album (Hidden on small mobile) */}
-      {showAlbum && track.album && (
+      {showAlbum && albumStr && (
         <div className="hidden md:block w-1/4 truncate text-xs text-slate-400">
-          {track.albumId ? (
+          {albumIdStr ? (
             <Link
-              to={`/album/${track.albumId}`}
+              to={`/album/${encodeURIComponent(albumIdStr)}`}
               onClick={(e) => e.stopPropagation()}
               className="hover:underline hover:text-slate-300"
             >
-              {track.album}
+              {albumStr}
             </Link>
           ) : (
-            track.album
+            albumStr
           )}
         </div>
       )}
@@ -146,7 +153,7 @@ export const SongRow: React.FC<SongRowProps> = ({
         </button>
 
         <span className="text-xs font-medium text-slate-400 w-10 text-right">
-          {formatDuration(track.duration)}
+          {formatDuration(track.duration || 180)}
         </span>
 
         <div onClick={(e) => e.stopPropagation()}>
