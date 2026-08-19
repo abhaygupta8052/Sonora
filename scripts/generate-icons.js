@@ -1,0 +1,36 @@
+import fs from 'fs';
+import path from 'path';
+
+const svgContent = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <defs>
+    <linearGradient id="brandGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#8B5CF6" />
+      <stop offset="50%" stop-color="#6366F1" />
+      <stop offset="100%" stop-color="#EC4899" />
+    </linearGradient>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#111827" />
+      <stop offset="100%" stop-color="#090D16" />
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="128" fill="url(#bgGradient)" />
+  <rect x="8" y="8" width="496" height="496" rx="120" stroke="url(#brandGradient)" stroke-width="4" stroke-opacity="0.3" fill="none" />
+  <g transform="translate(100, 100)">
+    <rect x="20" y="100" width="28" height="112" rx="14" fill="url(#brandGradient)" opacity="0.8" />
+    <rect x="76" y="50" width="28" height="212" rx="14" fill="url(#brandGradient)" />
+    <rect x="132" y="10" width="28" height="292" rx="14" fill="url(#brandGradient)" />
+    <rect x="188" y="60" width="28" height="192" rx="14" fill="url(#brandGradient)" />
+    <rect x="244" y="110" width="28" height="92" rx="14" fill="url(#brandGradient)" opacity="0.8" />
+    <circle cx="280" cy="50" r="16" fill="#EC4899" />
+  </g>
+</svg>`;
+
+const iconDir = path.join(process.cwd(), 'public', 'icons');
+if (!fs.existsSync(iconDir)) {
+  fs.mkdirSync(iconDir, { recursive: true });
+}
+
+fs.writeFileSync(path.join(iconDir, 'icon-192.svg'), svgContent);
+fs.writeFileSync(path.join(iconDir, 'icon-512.svg'), svgContent);
+fs.writeFileSync(path.join(process.cwd(), 'public', 'favicon.svg'), svgContent);
+console.log('Icons generated successfully');
