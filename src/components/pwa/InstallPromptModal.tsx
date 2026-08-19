@@ -59,14 +59,23 @@ export const InstallPromptModal: React.FC<InstallPromptModalProps> = ({
           </div>
         ) : (
           <div className="w-full space-y-3 pt-1">
-            {/* 1-Click Install Button (Always clickable) */}
+            {/* 1-Click Install Button */}
             <button
               onClick={handleInstallClick}
-              className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 text-white font-bold text-xs sm:text-sm shadow-lg shadow-brand-600/30 active:scale-95 transition-all"
+              className={`w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-bold text-xs sm:text-sm shadow-lg active:scale-95 transition-all ${
+                hasNativePrompt
+                  ? 'bg-gradient-to-r from-emerald-500 to-brand-600 hover:from-emerald-400 hover:to-brand-500 text-white shadow-emerald-600/30'
+                  : 'bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 text-white shadow-brand-600/30'
+              }`}
             >
               <Download className="w-4 h-4 shrink-0" />
-              <span>{hasNativePrompt ? 'Click to Install Now' : 'Prompt Install Dialog'}</span>
+              <span>{hasNativePrompt ? '⚡ Install Now (1-Click)' : 'Prompt Install Dialog'}</span>
             </button>
+            {!hasNativePrompt && (
+              <p className="text-[11px] text-amber-500/90 text-center px-2">
+                💡 If the button above does nothing, look for the <strong>install icon (⊕)</strong> in your browser's address bar instead.
+              </p>
+            )}
 
             {/* Platform Guides */}
             <div className="w-full text-left space-y-2.5 pt-2">

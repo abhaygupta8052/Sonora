@@ -8,6 +8,23 @@ import { registerSW } from 'virtual:pwa-register';
 import App from './App';
 import './index.css';
 
+// ── CRITICAL: Capture beforeinstallprompt BEFORE React renders ──────────────
+// The browser fires this event very early — often before useEffect runs.
+// We store the deferred prompt in a module-level variable and expose it on
+// `window.__pwa_deferred_prompt` so our hook can always retrieve it.
+(function capturePWAPromptEarly() {
+  const handler = (e: Event) => {
+    e.preventDefault();
+    (window as any).__pwa_deferred_prompt = e;
+    window.dispatchEvent(new CustomEvent('pwa-prompt-ready'));
+  };
+  window.addEventListener('beforeinstallprompt', handler);
+  window.addEventListener('appinstalled', () => {
+    (window as any).__pwa_deferred_prompt = null;
+    (window as any).__pwa_is_installed = true;
+  });
+})();
+
 // Automatically register service worker for PWA support
 registerSW({
   immediate: true,
