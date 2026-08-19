@@ -34,21 +34,19 @@ import {
 type FilterTab = 'trending' | 'all' | 'songs' | 'artists' | 'albums' | 'playlists';
 
 const TRENDING_CATEGORIES = [
-  { id: 'all', label: '🔥 All Hits', query: 'Hindi Hits' },
-  { id: 'hindi', label: '🎬 Bollywood', query: 'Hindi Hits' },
-  { id: 'bhojpuri', label: '⚡ Bhojpuri', query: 'Bhojpuri Songs' },
-  { id: 'arkesta', label: '🎪 Arkesta', query: 'Arkestra' },
-  { id: 'punjabi', label: '🏎️ Punjabi', query: 'Punjabi Hits' },
-  { id: 'haryanvi', label: '🚜 Haryanvi', query: 'Haryanvi Hits' },
-  { id: 'rapper', label: '🎤 Desi Rap', query: 'Desi Hip Hop' },
-  { id: 'love', label: '❤️ Love Songs', query: 'Romantic Hindi' },
+  { id: 'all', label: 'All Hits', query: 'Hindi Hits' },
+  { id: 'hindi', label: 'Bollywood', query: 'Hindi Hits' },
+  { id: 'bhojpuri', label: 'Bhojpuri', query: 'Bhojpuri Songs' },
+  { id: 'punjabi', label: 'Punjabi', query: 'Punjabi Hits' },
+  { id: 'haryanvi', label: 'Haryanvi', query: 'Haryanvi Hits' },
+  { id: 'rapper', label: 'Desi Rap', query: 'Desi Hip Hop' },
+  { id: 'love', label: 'Love Songs', query: 'Romantic Hindi' },
 ];
 
 const QUICK_TRENDING_CHIPS = [
   'Bom Diggy',
   'Kesariya',
   'Pawan Singh Bhojpuri',
-  'Arkestra Ka Gana',
   'Sidhu Moosewala',
   'Sapna Choudhary',
   'MC Stan Divine',

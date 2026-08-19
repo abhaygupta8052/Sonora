@@ -11,19 +11,8 @@ import { useAudioPlayer } from '../context/AudioPlayerContext';
 import { useLibrary } from '../context/LibraryContext';
 import {
   Play,
-  Sparkles,
-  Flame,
-  Radio,
-  Zap,
-  Coffee,
-  Music,
-  Heart,
   ChevronRight,
-  Disc3,
-  Mic2,
-  Trophy,
-  PartyPopper,
-  History,
+  Music,
   Search,
   UserSearch
 } from 'lucide-react';
@@ -33,7 +22,6 @@ interface TrendingSectionConfig {
   id: string;
   name: string;
   query: string;
-  icon: any;
   gradient: string;
   badge: string;
   subtitle: string;
@@ -42,65 +30,50 @@ interface TrendingSectionConfig {
 const TRENDING_SECTIONS: TrendingSectionConfig[] = [
   {
     id: 'hindi',
-    name: 'Trending Hindi & Bollywood',
+    name: 'Bollywood & Hindi Hits',
     query: 'Hindi Hits',
-    icon: Flame,
     gradient: 'from-rose-500 to-red-700',
-    badge: '🎬 Bollywood',
-    subtitle: 'Top chartbusters, viral reels & Bollywood melodies'
+    badge: 'Bollywood',
+    subtitle: 'Top chartbusters, viral hits & Bollywood melodies'
   },
   {
     id: 'bhojpuri',
     name: 'Bhojpuri Superhits',
     query: 'Bhojpuri Songs',
-    icon: Zap,
     gradient: 'from-amber-500 to-orange-700',
-    badge: '⚡ Bhojpuri Tadka',
+    badge: 'Bhojpuri',
     subtitle: 'Pawan Singh, Khesari Lal, Shilpi Raj & Top Bhojpuri Stars'
   },
   {
-    id: 'arkesta',
-    name: 'Arkesta Dance & Stage Hits',
-    query: 'Arkestra',
-    icon: PartyPopper,
-    gradient: 'from-pink-500 to-fuchsia-700',
-    badge: '🎪 Arkesta Special',
-    subtitle: 'High-voltage DJ beats & party stage dance anthems'
-  },
-  {
     id: 'punjabi',
-    name: 'Punjabi Swag & Bass',
+    name: 'Punjabi Hits',
     query: 'Punjabi Hits',
-    icon: Radio,
     gradient: 'from-purple-600 to-indigo-800',
-    badge: '🏎️ Punjabi Swag',
+    badge: 'Punjabi',
     subtitle: 'Sidhu Moosewala, AP Dhillon, Karan Aujla, Diljit Dosanjh'
   },
   {
     id: 'haryanvi',
-    name: 'Haryanvi Top Beats',
+    name: 'Haryanvi Hits',
     query: 'Haryanvi Hits',
-    icon: Disc3,
     gradient: 'from-emerald-500 to-teal-700',
-    badge: '🚜 Haryanvi Ragni',
+    badge: 'Haryanvi',
     subtitle: 'Sapna Choudhary, Renuka Panwar, Gulzaar Chhaniwala'
   },
   {
     id: 'rapper',
     name: 'Desi Rap & Hip-Hop',
     query: 'Desi Hip Hop',
-    icon: Mic2,
     gradient: 'from-cyan-500 to-blue-700',
-    badge: '🎤 Desi Hip-Hop',
+    badge: 'Desi Hip-Hop',
     subtitle: 'Divine, MC Stan, King, Raftaar, Emiway Bantai & Underground Rap'
   },
   {
     id: 'love',
-    name: 'Love & Romantic Melodies',
+    name: 'Romantic & Love Melodies',
     query: 'Romantic Hindi',
-    icon: Heart,
     gradient: 'from-rose-600 to-pink-700',
-    badge: '❤️ Love & Soul',
+    badge: 'Romantic',
     subtitle: 'Soulful, heartfelt acoustic & romantic ballads'
   }
 ];
@@ -121,43 +94,49 @@ export const HomePage: React.FC = () => {
   const activeSectionTracks = sectionTracks[activeSectionConfig.id] || [];
   const featuredTrack = activeSectionTracks[0] ?? null;
 
-  const handleArtistSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    const q = artistSearch.trim();
-    if (q) navigate(`/artist/${encodeURIComponent(q)}`);
-  };
-
   useEffect(() => {
     let mounted = true;
 
-    const loadAllTrendingSections = async () => {
+    const loadAllSections = async () => {
       setIsLoading(true);
       try {
         const promises = TRENDING_SECTIONS.map(async (sec) => {
-          const tracks = await musicApi.getTrending(sec.query);
-          return { id: sec.id, tracks };
+          try {
+            const tracks = await musicApi.getTrending(sec.query);
+            return { id: sec.id, tracks };
+          } catch (e) {
+            console.error(`Error loading section ${sec.id}`, e);
+            return { id: sec.id, tracks: [] };
+          }
         });
 
         const results = await Promise.all(promises);
         if (mounted) {
-          const trackMap: Record<string, Track[]> = {};
+          const map: Record<string, Track[]> = {};
           results.forEach((r) => {
-            trackMap[r.id] = r.tracks;
+            map[r.id] = r.tracks;
           });
-          setSectionTracks(trackMap);
+          setSectionTracks(map);
         }
       } catch (err) {
-        console.error('Failed to load trending music', err);
+        console.error('Failed to load homepage sections', err);
       } finally {
         if (mounted) setIsLoading(false);
       }
     };
 
-    loadAllTrendingSections();
+    loadAllSections();
     return () => {
       mounted = false;
     };
   }, []);
+
+  const handleArtistSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    const query = artistSearch.trim();
+    if (!query) return;
+    navigate(`/artist/${encodeURIComponent(query)}`);
+  };
 
   const visibleSections =
     activeFilter === 'all'
@@ -170,14 +149,13 @@ export const HomePage: React.FC = () => {
       <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none sticky top-16 z-20 bg-slate-50/90 dark:bg-dark-bg/90 backdrop-blur-md py-2 -mx-4 px-4 sm:-mx-6 sm:px-6">
         <button
           onClick={() => setActiveFilter('all')}
-          className={`px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 ${
+          className={`px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all ${
             activeFilter === 'all'
               ? 'bg-brand-600 text-white shadow-lg shadow-brand-600/30 scale-105'
               : 'bg-white dark:bg-dark-card hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200/80 dark:border-slate-800'
           }`}
         >
-          <Trophy className="w-3.5 h-3.5" />
-          <span>🔥 All Trending</span>
+          All Trending
         </button>
 
         {TRENDING_SECTIONS.map((sec) => (
@@ -201,21 +179,16 @@ export const HomePage: React.FC = () => {
       {recentlyPlayed.length > 0 && activeFilter === 'all' && (
         <section className="p-4 sm:p-5 rounded-3xl bg-gradient-to-r from-brand-950/40 via-purple-950/20 to-slate-900/40 border border-brand-500/20 shadow-md space-y-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
-              <div className="p-2 rounded-xl bg-brand-500/20 text-brand-400">
-                <History className="w-5 h-5" />
-              </div>
-              <div>
-                <h3 className="text-lg sm:text-xl font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
-                  <span>Recently Played History</span>
-                  <span className="text-xs px-2 py-0.5 rounded-full bg-brand-500/20 text-brand-400 font-bold">
-                    {recentlyPlayed.length}
-                  </span>
-                </h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Jump back into your recent music streams
-                </p>
-              </div>
+            <div>
+              <h3 className="text-lg sm:text-xl font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
+                <span>Recently Played History</span>
+                <span className="text-xs px-2 py-0.5 rounded-full bg-brand-500/20 text-brand-400 font-bold">
+                  {recentlyPlayed.length}
+                </span>
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                Jump back into your recent music streams
+              </p>
             </div>
 
             <button
@@ -257,7 +230,6 @@ export const HomePage: React.FC = () => {
             <div className="max-w-xl space-y-3 text-center md:text-left">
               {/* Section badge — matches current filter */}
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-white/90 text-xs font-bold uppercase tracking-wider">
-                <Sparkles className="w-3.5 h-3.5" />
                 <span>{activeSectionConfig.badge}</span>
               </div>
               <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight line-clamp-2">
@@ -292,24 +264,18 @@ export const HomePage: React.FC = () => {
 
       {/* Dedicated Trending Sections */}
       {visibleSections.map((sec) => {
-        const Icon = sec.icon;
         const tracks = sectionTracks[sec.id] || [];
 
         return (
           <section key={sec.id} className="space-y-4">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className={`p-2.5 rounded-2xl bg-gradient-to-tr ${sec.gradient} text-white shadow-md`}>
-                  <Icon className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold text-slate-900 dark:text-white">
-                    {sec.name}
-                  </h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
-                    {sec.subtitle}
-                  </p>
-                </div>
+              <div>
+                <h3 className="text-xl font-bold text-slate-900 dark:text-white">
+                  {sec.name}
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                  {sec.subtitle}
+                </p>
               </div>
 
               <button
@@ -349,7 +315,7 @@ export const HomePage: React.FC = () => {
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-xl font-bold text-slate-900 dark:text-white">Featured Artists</h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400">Click any artist to see their full profile & all songs</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Click any artist to see their full profile & all songs</p>
             </div>
           </div>
 
@@ -394,7 +360,7 @@ export const HomePage: React.FC = () => {
               <h3 className="text-xl font-bold text-slate-900 dark:text-white">
                 Explore Moods & Stations
               </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                 Find music tailored for any vibe
               </p>
             </div>
@@ -430,7 +396,7 @@ export const HomePage: React.FC = () => {
               <h3 className="text-xl font-bold text-slate-900 dark:text-white">
                 Featured Playlists
               </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                 Handcrafted soundscapes for every mood
               </p>
             </div>

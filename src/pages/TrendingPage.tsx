@@ -6,82 +6,58 @@ import { SongRowSkeleton } from '../components/common/Skeleton';
 import { AddToPlaylistModal } from '../components/common/AddToPlaylistModal';
 import { useAudioPlayer } from '../context/AudioPlayerContext';
 import {
-  Flame,
   Play,
-  Shuffle,
-  Sparkles,
-  Zap,
-  Radio,
-  Disc3,
-  Mic2,
-  Heart,
-  PartyPopper,
-  Music
+  Shuffle
 } from 'lucide-react';
 
 interface TrendingTabOption {
   id: string;
   label: string;
   query: string;
-  icon: any;
   description: string;
 }
 
 const TRENDING_TABS: TrendingTabOption[] = [
   {
     id: 'all',
-    label: '🔥 All Trending',
+    label: 'All Trending',
     query: 'Top Bollywood Hindi Hits 2024',
-    icon: Flame,
     description: 'The overall top trending songs across India & global charts'
   },
   {
     id: 'hindi',
-    label: '🎬 Bollywood & Hindi',
+    label: 'Bollywood & Hindi',
     query: 'Hindi Hits',
-    icon: Flame,
     description: 'Blockbuster Bollywood cinema tracks, viral reels & top Hindi hits'
   },
   {
     id: 'bhojpuri',
-    label: '⚡ Bhojpuri Superhits',
+    label: 'Bhojpuri Superhits',
     query: 'Bhojpuri Songs',
-    icon: Zap,
     description: 'Pawan Singh, Khesari Lal, Shilpi Raj & high energy Bhojpuri songs'
   },
   {
-    id: 'arkesta',
-    label: '🎪 Arkesta Dance',
-    query: 'Arkestra',
-    icon: PartyPopper,
-    description: 'Stage dance dhamaka, orchestra specials & high-bass party tracks'
-  },
-  {
     id: 'punjabi',
-    label: '🏎️ Punjabi Swag',
+    label: 'Punjabi Hits',
     query: 'Punjabi Hits',
-    icon: Radio,
     description: 'Sidhu Moosewala, AP Dhillon, Karan Aujla, Diljit Dosanjh & Desi trap'
   },
   {
     id: 'haryanvi',
-    label: '🚜 Haryanvi Hits',
+    label: 'Haryanvi Hits',
     query: 'Haryanvi Hits',
-    icon: Disc3,
     description: 'Sapna Choudhary, Renuka Panwar, Gulzaar Chhaniwala top bangers'
   },
   {
     id: 'rapper',
-    label: '🎤 Desi Rap & Hip-Hop',
+    label: 'Desi Rap & Hip-Hop',
     query: 'Desi Hip Hop',
-    icon: Mic2,
     description: 'Divine, MC Stan, King, Raftaar, Emiway Bantai & underground rap'
   },
   {
     id: 'love',
-    label: '❤️ Love & Romantic',
+    label: 'Romantic & Love',
     query: 'Romantic Hindi',
-    icon: Heart,
     description: 'Soulful love songs, acoustic ballads, Arijit Singh & romantic hits'
   }
 ];
@@ -135,12 +111,11 @@ export const TrendingPage: React.FC = () => {
         <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="space-y-3 text-center md:text-left max-w-xl">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-500/20 border border-rose-500/30 text-rose-300 text-xs font-bold uppercase tracking-wider">
-              <Flame className="w-3.5 h-3.5" />
               <span>Trending Charts</span>
             </div>
 
             <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight">
-              {currentTabInfo.label.replace(/^[^\w]+/, '')}
+              {currentTabInfo.label}
             </h1>
 
             <p className="text-slate-300 text-xs sm:text-sm">
@@ -206,12 +181,9 @@ export const TrendingPage: React.FC = () => {
       {/* Track List */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-rose-500" />
-            <h3 className="text-lg font-bold text-slate-900 dark:text-white">
-              Top Ranked Songs
-            </h3>
-          </div>
+          <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+            Top Ranked Songs
+          </h3>
           <span className="text-xs text-slate-400 font-medium">
             320kbps High Fidelity
           </span>
