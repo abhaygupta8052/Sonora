@@ -16,22 +16,26 @@ const BACKUP_ENDPOINTS = [
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-/** Safely stringify anything that might be an object or array */
-function safeString(value: unknown): string {
-  if (!value) return '';
+/** Safely stringify anything that might be an object, array, number, null or undefined */
+export function safeString(value: unknown): string {
+  if (value === null || value === undefined) return '';
   if (typeof value === 'string') return value;
+  if (typeof value === 'number' || typeof value === 'boolean') return String(value);
   if (Array.isArray(value)) {
-    return value.map((v: any) => v?.name || v?.title || String(v)).filter(Boolean).join(', ');
+    return value
+      .map((v: any) => (typeof v === 'object' && v ? v.name || v.title || v.text || '' : String(v || '')))
+      .filter(Boolean)
+      .join(', ');
   }
   if (typeof value === 'object') {
     const obj = value as Record<string, any>;
-    return obj.name || obj.title || obj.text || JSON.stringify(obj);
+    return obj.name || obj.title || obj.text || '';
   }
   return String(value);
 }
 
 /** Decode HTML entities in titles / artist names */
-function decodeHtml(html: string): string {
+export function decodeHtml(html: string): string {
   if (!html) return '';
   const txt = document.createElement('textarea');
   txt.innerHTML = html;
@@ -48,9 +52,12 @@ function decodeHtml(html: string): string {
  * Generate a normalized deduplication key for a track.
  */
 export function getSongDedupKey(track: Track): string {
-  if (!track || !track.title) return '';
+  if (!track) return '';
 
-  const cleanTitle = track.title
+  const rawTitle = safeString(track.title);
+  if (!rawTitle) return '';
+
+  const cleanTitle = rawTitle
     .toLowerCase()
     .replace(/\((from|video|audio|official|lyrics|hd|4k|remix|slowed|reverb|full song|original)[^)]*\)/gi, '')
     .replace(/\[(from|video|audio|official|lyrics|hd|4k|remix|slowed|reverb|full song|original)[^\]]*\]/gi, '')
@@ -58,7 +65,7 @@ export function getSongDedupKey(track: Track): string {
     .replace(/\s+/g, ' ')
     .trim();
 
-  const cleanArtist = (track.artist || '')
+  const cleanArtist = safeString(track.artist)
     .toLowerCase()
     .split(',')[0]
     .split('&')[0]
@@ -80,15 +87,17 @@ export function deduplicateTracks(tracks: Track[]): Track[] {
   const orderedKeys: string[] = [];
 
   for (const track of tracks) {
-    if (!track || !track.title) continue;
+    if (!track) continue;
+    const trackId = safeString(track.id);
+    if (!trackId) continue;
 
-    if (seenIds.has(track.id)) continue;
-    seenIds.add(track.id);
+    if (seenIds.has(trackId)) continue;
+    seenIds.add(trackId);
 
     const key = getSongDedupKey(track);
     if (!key) {
-      orderedKeys.push(track.id);
-      keyMap.set(track.id, track);
+      orderedKeys.push(trackId);
+      keyMap.set(trackId, track);
       continue;
     }
 
@@ -147,7 +156,7 @@ function normalizeOfficialSong(item: any): Track {
   let streamUrl = '';
 
   const encUrl = item.encrypted_media_url || moreInfo.encrypted_media_url || item.encrypted_url || moreInfo.encrypted_url;
-  if (encUrl) {
+  if (encUrl && typeof encUrl === 'string') {
     streamUrl = decryptMediaUrl(encUrl, '320kbps');
   }
 
@@ -172,25 +181,26 @@ function normalizeOfficialSong(item: any): Track {
   }
   const artwork = rawImage || 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=600&auto=format&fit=crop&q=80';
 
-  // Artist
+  // Artist — always guaranteed string
   const rawArtist =
     item.primary_artists ??
     moreInfo.primary_artists ??
+    moreInfo.artistMap?.primary_artists ??
+    moreInfo.music ??
     item.singers ??
     moreInfo.singers ??
     item.music ??
-    moreInfo.music ??
     item.artist ??
     'Unknown Artist';
-  const artistName = decodeHtml(safeString(rawArtist));
+  const artistName = decodeHtml(safeString(rawArtist)) || 'Unknown Artist';
 
   const title = decodeHtml(safeString(item.song || item.name || item.title || moreInfo.song || 'Untitled Song'));
 
   return {
-    id: item.id || `track-${Math.random().toString(36).substring(2, 9)}`,
+    id: safeString(item.id) || `track-${Math.random().toString(36).substring(2, 9)}`,
     title,
     artist: artistName,
-    artistId: safeString(item.primary_artists_id || moreInfo.primary_artists_id || item.artistId || moreInfo.artist_map?.primary_artists?.[0]?.id),
+    artistId: safeString(item.primary_artists_id || moreInfo.primary_artists_id || item.artistId || moreInfo.artistMap?.primary_artists?.[0]?.id),
     album: decodeHtml(safeString(item.album || moreInfo.album || 'Single')),
     albumId: safeString(item.albumid || item.album_id || moreInfo.album_id),
     duration: parseInt(item.duration || moreInfo.duration, 10) || 180,
@@ -226,17 +236,17 @@ function normalizeProxyTrack(item: any): Track {
     artwork = images.replace('150x150', '500x500').replace('50x50', '500x500');
   }
 
-  const rawArtist = (() => {
-    if (item.artists?.primary?.length > 0) return item.artists.primary.map((a: any) => a.name).join(', ');
-    if (typeof item.primaryArtists === 'string') return item.primaryArtists;
-    if (typeof item.artist === 'string') return item.artist;
-    return 'Unknown Artist';
-  })();
+  const rawArtist =
+    item.artists?.primary ??
+    item.primaryArtists ??
+    item.artist ??
+    item.singers ??
+    'Unknown Artist';
 
   return {
-    id: item.id || `track-${Math.random().toString(36).substring(2, 9)}`,
+    id: safeString(item.id) || `track-${Math.random().toString(36).substring(2, 9)}`,
     title: decodeHtml(safeString(item.name || item.title || item.song || 'Untitled Song')),
-    artist: decodeHtml(rawArtist),
+    artist: decodeHtml(safeString(rawArtist)) || 'Unknown Artist',
     artistId: safeString(item.primaryArtistsId || item.artistId || item.artists?.primary?.[0]?.id),
     album: decodeHtml(safeString(item.album?.name || item.album || 'Single')),
     albumId: safeString(item.album?.id || item.albumId),
@@ -263,7 +273,7 @@ async function searchItunes(query: string): Promise<Track[]> {
           return {
             id: `itunes_${item.trackId}`,
             title: decodeHtml(safeString(item.trackName || item.collectionName || 'Song')),
-            artist: decodeHtml(safeString(item.artistName || 'Unknown Artist')),
+            artist: decodeHtml(safeString(item.artistName || 'Unknown Artist')) || 'Unknown Artist',
             artistId: safeString(item.artistId),
             album: decodeHtml(safeString(item.collectionName || 'Single')),
             albumId: safeString(item.collectionId),
@@ -373,10 +383,9 @@ async function searchSaavn(trimmed: string): Promise<{ tracks: Track[]; artists:
 
 async function trendingSaavn(query: string): Promise<Track[]> {
   const currentYear = new Date().getFullYear();
-  const randomPage = Math.floor(Math.random() * 2) + 1; // page 1 or 2 to rotate on refresh
+  const randomPage = Math.floor(Math.random() * 2) + 1;
   const dynamicQuery = query.includes(String(currentYear)) ? query : `${query} ${currentYear}`;
 
-  // 1. Try our own Vercel proxy first
   try {
     const params = `?__call=search.getResults&_format=json&p=${randomPage}&n=30&q=${encodeURIComponent(dynamicQuery)}`;
     const res = await fetch(`${SAAVN_PROXY}${params}`, { signal: AbortSignal.timeout(6000) });
@@ -393,7 +402,6 @@ async function trendingSaavn(query: string): Promise<Track[]> {
     console.warn('Saavn proxy trending failed, trying mirrors...', e);
   }
 
-  // Community mirrors
   for (const endpoint of BACKUP_ENDPOINTS) {
     try {
       const res = await fetch(`${endpoint}/search/songs?query=${encodeURIComponent(dynamicQuery)}&page=${randomPage}&limit=30`, {
@@ -477,13 +485,13 @@ async function fetchArtistRealImage(artistName: string): Promise<string | null> 
       if (Array.isArray(artists) && artists.length > 0) {
         const exact = artists.find(
           (a: any) =>
-            a.name?.toLowerCase().includes(artistName.toLowerCase()) ||
-            a.title?.toLowerCase().includes(artistName.toLowerCase()) ||
-            artistName.toLowerCase().includes(a.name?.toLowerCase() || '')
+            safeString(a.name).toLowerCase().includes(artistName.toLowerCase()) ||
+            safeString(a.title).toLowerCase().includes(artistName.toLowerCase()) ||
+            artistName.toLowerCase().includes(safeString(a.name).toLowerCase())
         );
         const match = exact || artists[0];
         if (match?.image) {
-          const img = (match.image as string).replace('50x50', '500x500').replace('150x150', '500x500');
+          const img = (safeString(match.image)).replace('50x50', '500x500').replace('150x150', '500x500');
           if (img && !img.includes('default') && !img.includes('artist-default')) {
             return img;
           }
@@ -498,7 +506,7 @@ async function fetchArtistRealImage(artistName: string): Promise<string | null> 
 function extractArtistImageFromSongs(songs: Track[], artistName: string): string | null {
   const firstName = artistName.toLowerCase().split(' ')[0];
   for (const s of songs) {
-    if (s.artwork && String(s.artist).toLowerCase().includes(firstName)) {
+    if (s.artwork && safeString(s.artist).toLowerCase().includes(firstName)) {
       return s.artwork;
     }
   }
@@ -509,8 +517,9 @@ function extractArtistsFromTracks(tracks: Track[]): Artist[] {
   const artistMap = new Map<string, { name: string; image: string; songCount: number }>();
 
   for (const t of tracks) {
-    if (!t.artist) continue;
-    const names = t.artist.split(/[,&/|]/).map((n) => n.trim()).filter((n) => n.length > 1);
+    const artistStr = safeString(t.artist);
+    if (!artistStr) continue;
+    const names = artistStr.split(/[,&/|]/).map((n) => n.trim()).filter((n) => n.length > 1);
     for (const name of names) {
       if (!artistMap.has(name)) {
         artistMap.set(name, {
@@ -563,7 +572,7 @@ export const musicApi = {
     if (combinedArtists.length < 3 && combined.length > 0) {
       const derived = extractArtistsFromTracks(combined);
       for (const d of derived) {
-        if (!combinedArtists.some((a) => a.name.toLowerCase() === d.name.toLowerCase())) {
+        if (!combinedArtists.some((a) => safeString(a.name).toLowerCase() === safeString(d.name).toLowerCase())) {
           combinedArtists.push(d);
         }
       }
@@ -582,9 +591,9 @@ export const musicApi = {
     const qLower = trimmed.toLowerCase();
     const filtered = FEATURED_TRACKS.filter(
       (t) =>
-        t.title.toLowerCase().includes(qLower) ||
-        t.artist.toLowerCase().includes(qLower) ||
-        (t.genre && t.genre.toLowerCase().includes(qLower))
+        safeString(t.title).toLowerCase().includes(qLower) ||
+        safeString(t.artist).toLowerCase().includes(qLower) ||
+        (t.genre && safeString(t.genre).toLowerCase().includes(qLower))
     );
     return {
       tracks: filtered.length > 0 ? deduplicateTracks(filtered) : FEATURED_TRACKS,
@@ -621,7 +630,7 @@ export const musicApi = {
   async getArtistDetails(id: string): Promise<Artist | null> {
     const artistName = decodeURIComponent(id).trim();
     const local = FEATURED_ARTISTS.find(
-      (a) => a.id === artistName || a.name.toLowerCase() === artistName.toLowerCase()
+      (a) => a.id === artistName || safeString(a.name).toLowerCase() === artistName.toLowerCase()
     );
 
     const [rawSongs, realImage] = await Promise.all([
