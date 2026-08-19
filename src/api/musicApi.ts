@@ -23,13 +23,19 @@ export function safeString(value: unknown): string {
   if (typeof value === 'number' || typeof value === 'boolean') return String(value);
   if (Array.isArray(value)) {
     return value
-      .map((v: any) => (typeof v === 'object' && v ? v.name || v.title || v.text || '' : String(v || '')))
+      .map((v: any) => {
+        if (typeof v === 'string') return v;
+        if (typeof v === 'object' && v !== null) {
+          return String(v.name || v.title || v.text || v.artist || v.artistName || '');
+        }
+        return String(v || '');
+      })
       .filter(Boolean)
       .join(', ');
   }
-  if (typeof value === 'object') {
+  if (typeof value === 'object' && value !== null) {
     const obj = value as Record<string, any>;
-    return obj.name || obj.title || obj.text || '';
+    return String(obj.name || obj.title || obj.text || obj.artist || obj.artistName || '');
   }
   return String(value);
 }
@@ -38,7 +44,7 @@ export function safeString(value: unknown): string {
 export function decodeHtml(html: string): string {
   if (!html) return '';
   const txt = document.createElement('textarea');
-  txt.innerHTML = html;
+  txt.innerHTML = String(html);
   return txt.value
     .replace(/&quot;/g, '"')
     .replace(/&amp;/g, '&')
@@ -129,7 +135,7 @@ export function deduplicateTracks(tracks: Track[]): Track[] {
 
 /** Decrypt official JioSaavn encrypted_media_url → direct streaming URL */
 function decryptMediaUrl(encryptedUrl: string, quality: '320kbps' | '160kbps' | '96kbps' = '320kbps'): string {
-  if (!encryptedUrl) return '';
+  if (!encryptedUrl || typeof encryptedUrl !== 'string') return '';
   try {
     const key = CryptoJS.enc.Utf8.parse(DES_KEY);
     const cipherParams = CryptoJS.lib.CipherParams.create({
@@ -152,7 +158,7 @@ function decryptMediaUrl(encryptedUrl: string, quality: '320kbps' | '160kbps' | 
 
 /** Normalize a raw official JioSaavn song item → Track */
 function normalizeOfficialSong(item: any): Track {
-  const moreInfo = item.more_info || {};
+  const moreInfo = (typeof item.more_info === 'object' && item.more_info) ? item.more_info : {};
   let streamUrl = '';
 
   const encUrl = item.encrypted_media_url || moreInfo.encrypted_media_url || item.encrypted_url || moreInfo.encrypted_url;
@@ -179,9 +185,9 @@ function normalizeOfficialSong(item: any): Track {
   } else {
     rawImage = '';
   }
-  const artwork = rawImage || 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=600&auto=format&fit=crop&q=80';
+  const artwork = safeString(rawImage) || 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=600&auto=format&fit=crop&q=80';
 
-  // Artist — always guaranteed string
+  // Artist — guaranteed primitive string!
   const rawArtist =
     item.primary_artists ??
     moreInfo.primary_artists ??
@@ -194,7 +200,7 @@ function normalizeOfficialSong(item: any): Track {
     'Unknown Artist';
   const artistName = decodeHtml(safeString(rawArtist)) || 'Unknown Artist';
 
-  const title = decodeHtml(safeString(item.song || item.name || item.title || moreInfo.song || 'Untitled Song'));
+  const title = decodeHtml(safeString(item.song || item.name || item.title || moreInfo.song || 'Untitled Song')) || 'Untitled Song';
 
   return {
     id: safeString(item.id) || `track-${Math.random().toString(36).substring(2, 9)}`,
@@ -222,7 +228,7 @@ function normalizeProxyTrack(item: any): Track {
       downloadUrl.find((u: any) => u.quality === '320kbps') ||
       downloadUrl.find((u: any) => u.quality === '160kbps') ||
       downloadUrl[downloadUrl.length - 1];
-    streamUrl = highQ?.url || highQ?.link || '';
+    streamUrl = safeString(highQ?.url || highQ?.link || '');
   } else if (typeof downloadUrl === 'string') {
     streamUrl = downloadUrl;
   }
@@ -231,7 +237,7 @@ function normalizeProxyTrack(item: any): Track {
   let artwork = 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=600&auto=format&fit=crop&q=80';
   if (Array.isArray(images) && images.length > 0) {
     const highImg = images.find((img: any) => img.quality === '500x500') || images[images.length - 1];
-    artwork = highImg?.url || highImg?.link || artwork;
+    artwork = safeString(highImg?.url || highImg?.link || artwork);
   } else if (typeof images === 'string' && images.length > 0) {
     artwork = images.replace('150x150', '500x500').replace('50x50', '500x500');
   }
@@ -269,7 +275,7 @@ async function searchItunes(query: string): Promise<Track[]> {
       const data = await res.json();
       if (Array.isArray(data.results) && data.results.length > 0) {
         return data.results.map((item: any): Track => {
-          const artwork = (item.artworkUrl100 || '').replace('100x100bb', '600x600bb');
+          const artwork = safeString((item.artworkUrl100 || '')).replace('100x100bb', '600x600bb');
           return {
             id: `itunes_${item.trackId}`,
             title: decodeHtml(safeString(item.trackName || item.collectionName || 'Song')),
@@ -279,7 +285,7 @@ async function searchItunes(query: string): Promise<Track[]> {
             albumId: safeString(item.collectionId),
             duration: Math.round((item.trackTimeMillis || 180000) / 1000),
             artwork: artwork || 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=600&auto=format&fit=crop&q=80',
-            streamUrl: item.previewUrl || '',
+            streamUrl: safeString(item.previewUrl || ''),
             provider: 'saavn',
             source: 'itunes',
             releaseYear: safeString(item.releaseDate ? item.releaseDate.substring(0, 4) : '2024'),
@@ -308,7 +314,6 @@ async function searchSaavn(trimmed: string): Promise<{ tracks: Track[]; artists:
         const rawTracks = resultsList.map(normalizeOfficialSong);
         const tracks = deduplicateTracks(rawTracks);
         if (tracks.length > 0) {
-          // Autocomplete for artists / albums
           let artists: Artist[] = [];
           let albums: Album[] = [];
           let playlists: Playlist[] = [];
@@ -317,33 +322,36 @@ async function searchSaavn(trimmed: string): Promise<{ tracks: Track[]; artists:
             const autoRes = await fetch(`${SAAVN_PROXY}${autoParams}`, { signal: AbortSignal.timeout(4000) });
             if (autoRes.ok) {
               const autoData = await autoRes.json();
-              if (autoData?.artists?.data) {
-                artists = autoData.artists.data.map((a: any): Artist => ({
-                  id: safeString(a.id || a.title),
-                  name: decodeHtml(safeString(a.title || a.name)),
-                  image: (safeString(a.image)).replace('50x50', '500x500'),
-                  followerCount: 150000,
-                  monthlyListeners: '2.5M',
-                  genres: ['Bollywood', 'Popular'],
-                  topTracks: [],
-                  albums: [],
-                }));
+              if (autoData?.artists?.data && Array.isArray(autoData.artists.data)) {
+                artists = autoData.artists.data.map((a: any): Artist => {
+                  const aName = decodeHtml(safeString(a.title || a.name)) || 'Artist';
+                  return {
+                    id: safeString(a.id || aName),
+                    name: aName,
+                    image: (safeString(a.image)).replace('50x50', '500x500'),
+                    followerCount: 150000,
+                    monthlyListeners: '2.5M',
+                    genres: ['Bollywood', 'Popular'],
+                    topTracks: [],
+                    albums: [],
+                  };
+                });
               }
-              if (autoData?.albums?.data) {
+              if (autoData?.albums?.data && Array.isArray(autoData.albums.data)) {
                 albums = autoData.albums.data.map((al: any): Album => ({
                   id: safeString(al.id),
-                  title: decodeHtml(safeString(al.title)),
-                  artist: decodeHtml(safeString(al.music || al.artist || 'Various Artists')),
+                  title: decodeHtml(safeString(al.title)) || 'Album',
+                  artist: decodeHtml(safeString(al.music || al.artist || 'Various Artists')) || 'Various Artists',
                   artwork: (safeString(al.image)).replace('50x50', '500x500'),
                   releaseYear: safeString(al.year || '2024'),
                   trackCount: 5,
                   tracks: [],
                 }));
               }
-              if (autoData?.playlists?.data) {
+              if (autoData?.playlists?.data && Array.isArray(autoData.playlists.data)) {
                 playlists = autoData.playlists.data.map((p: any): Playlist => ({
                   id: safeString(p.id),
-                  title: decodeHtml(safeString(p.title)),
+                  title: decodeHtml(safeString(p.title)) || 'Playlist',
                   description: 'Curated Playlist',
                   artwork: (safeString(p.image)).replace('50x50', '500x500'),
                   trackCount: 10,
@@ -535,9 +543,9 @@ function extractArtistsFromTracks(tracks: Track[]): Artist[] {
   }
 
   return Array.from(artistMap.values()).slice(0, 10).map((a): Artist => ({
-    id: a.name,
-    name: a.name,
-    image: a.image,
+    id: safeString(a.name),
+    name: safeString(a.name),
+    image: safeString(a.image),
     followerCount: 200000 + a.songCount * 15000,
     monthlyListeners: `${(1.2 + a.songCount * 0.3).toFixed(1)}M`,
     genres: ['Bollywood', 'Popular'],
@@ -670,15 +678,15 @@ export const musicApi = {
       const deduped = deduplicateTracks(songs);
       if (deduped.length > 0) {
         return {
-          id,
+          id: safeString(id),
           title: decodeHtml(safeString(deduped[0].album || id)),
-          artist: deduped[0].artist,
-          artistId: deduped[0].artistId,
-          artwork: deduped[0].artwork,
-          releaseYear: deduped[0].releaseYear || '2024',
+          artist: safeString(deduped[0].artist),
+          artistId: safeString(deduped[0].artistId),
+          artwork: safeString(deduped[0].artwork),
+          releaseYear: safeString(deduped[0].releaseYear || '2024'),
           trackCount: deduped.length,
           tracks: deduped,
-          genre: deduped[0].genre,
+          genre: safeString(deduped[0].genre),
         };
       }
     } catch { /* ignore */ }
@@ -692,7 +700,7 @@ export const musicApi = {
       const songs = await this.getTrending(id);
       const deduped = deduplicateTracks(songs);
       return {
-        id,
+        id: safeString(id),
         title: decodeHtml(id.replace(/[-_]/g, ' ')),
         description: 'Curated Music Stream',
         artwork: deduped[0]?.artwork || 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=600',
