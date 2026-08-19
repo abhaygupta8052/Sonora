@@ -2,7 +2,6 @@ import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { AppLayout } from './components/layout/AppLayout';
 import { HomePage } from './pages/HomePage';
-import { ReelsPage } from './pages/ReelsPage';
 import { TrendingPage } from './pages/TrendingPage';
 import { SearchPage } from './pages/SearchPage';
 import { LibraryPage } from './pages/LibraryPage';
@@ -17,7 +16,6 @@ export const App: React.FC = () => {
     <Routes>
       <Route path="/" element={<AppLayout />}>
         <Route index element={<HomePage />} />
-        <Route path="reels" element={<ReelsPage />} />
         <Route path="trending" element={<TrendingPage />} />
         <Route path="search" element={<SearchPage />} />
         <Route path="library" element={<LibraryPage />} />

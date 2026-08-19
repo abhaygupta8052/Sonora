@@ -11,8 +11,7 @@ import {
   Music2,
   Sparkles,
   Radio,
-  Download,
-  Film
+  Download
 } from 'lucide-react';
 import { useLibrary } from '../../context/LibraryContext';
 import { usePWAInstall } from '../../hooks/usePWAInstall';
@@ -40,7 +39,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ onOpenInstallModal }) => {
 
   const navLinks = [
     { to: '/', label: 'Home', icon: Home },
-    { to: '/reels', label: 'Music Reels', icon: Film, isNew: true },
     { to: '/trending', label: 'Trending', icon: Flame },
     { to: '/search', label: 'Search', icon: Search },
     { to: '/library', label: 'Your Library', icon: Library },
@@ -74,22 +72,15 @@ export const Sidebar: React.FC<SidebarProps> = ({ onOpenInstallModal }) => {
                 key={item.to}
                 to={item.to}
                 className={({ isActive }) =>
-                  `flex items-center justify-between px-3.5 py-3 rounded-xl text-sm font-semibold transition-all ${
+                  `flex items-center gap-3.5 px-3.5 py-3 rounded-xl text-sm font-semibold transition-all ${
                     isActive
                       ? 'bg-brand-600 text-white shadow-lg shadow-brand-600/30'
                       : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-white'
                   }`
                 }
               >
-                <div className="flex items-center gap-3.5">
-                  <Icon className="w-5 h-5 shrink-0" />
-                  <span>{item.label}</span>
-                </div>
-                {item.isNew && (
-                  <span className="px-1.5 py-0.5 rounded-md text-[9px] font-extrabold uppercase tracking-wider bg-gradient-to-r from-pink-500 to-rose-500 text-white shadow-sm animate-pulse">
-                    REEL
-                  </span>
-                )}
+                <Icon className="w-5 h-5 shrink-0" />
+                <span>{item.label}</span>
               </NavLink>
             );
           })}
