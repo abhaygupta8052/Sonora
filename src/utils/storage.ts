@@ -1,4 +1,4 @@
-import { Track, Playlist, ThemeMode, AudioQuality } from '../api/types';
+import { Track, Playlist, ThemeMode, AudioQuality, RepeatMode } from '../api/types';
 
 const STORAGE_KEYS = {
   FAVORITES: 'sonora_favorites_v1',
@@ -9,8 +9,21 @@ const STORAGE_KEYS = {
   VOLUME: 'sonora_player_volume_v1',
   AUDIO_QUALITY: 'sonora_audio_quality_v1',
   AUTOPLAY: 'sonora_autoplay_v1',
-  LAST_PLAYED_TRACK: 'sonora_last_track_v1'
+  LAST_PLAYED_TRACK: 'sonora_last_track_v1',
+  PLAYER_STATE: 'sonora_playback_state_v1'
 } as const;
+
+export interface SavedPlayerState {
+  currentTrack: Track | null;
+  queue: Track[];
+  originalQueue: Track[];
+  queueIndex: number;
+  currentTime: number;
+  duration: number;
+  repeatMode: RepeatMode;
+  isShuffled: boolean;
+  savedAt: number;
+}
 
 const MAX_RECENT_TRACKS = 100;
 const MAX_SEARCH_HISTORY = 25;
@@ -236,6 +249,47 @@ export const storage = {
 
   setAutoplay(enabled: boolean): void {
     localStorage.setItem(STORAGE_KEYS.AUTOPLAY, enabled.toString());
+  },
+
+  // Persistent Player Playback State (survives refresh / PWA background reload)
+  getPlayerState(): SavedPlayerState | null {
+    try {
+      const data = localStorage.getItem(STORAGE_KEYS.PLAYER_STATE);
+      if (!data) return null;
+      const parsed: SavedPlayerState = JSON.parse(data);
+      if (!parsed || !parsed.currentTrack) return null;
+      return parsed;
+    } catch {
+      return null;
+    }
+  },
+
+  setPlayerState(state: Partial<SavedPlayerState>): void {
+    try {
+      const current = this.getPlayerState() || {
+        currentTrack: null,
+        queue: [],
+        originalQueue: [],
+        queueIndex: -1,
+        currentTime: 0,
+        duration: 0,
+        repeatMode: 'off',
+        isShuffled: false,
+        savedAt: Date.now()
+      };
+      const merged: SavedPlayerState = {
+        ...current,
+        ...state,
+        savedAt: Date.now()
+      };
+      localStorage.setItem(STORAGE_KEYS.PLAYER_STATE, JSON.stringify(merged));
+    } catch {
+      // Storage full or private mode
+    }
+  },
+
+  clearPlayerState(): void {
+    localStorage.removeItem(STORAGE_KEYS.PLAYER_STATE);
   },
 
   // Export / Import / Clear Data
