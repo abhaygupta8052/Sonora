@@ -4,6 +4,22 @@ import { VitePWA } from 'vite-plugin-pwa';
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  server: {
+    proxy: {
+      '/api/saavn': {
+        target: 'https://www.jiosaavn.com',
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path.replace(/^\/api\/saavn/, '/api.php'),
+        headers: {
+          Referer: 'https://www.jiosaavn.com/',
+          Origin: 'https://www.jiosaavn.com',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/126.0 Safari/537.36',
+          Cookie: 'L=hindi%2Cpunjabi%2Cbhojpuri%2Cenglish; gdpr_acceptance=true;'
+        }
+      }
+    }
+  },
   plugins: [
     react(),
     VitePWA({

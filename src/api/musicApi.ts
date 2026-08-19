@@ -10,8 +10,8 @@ const DES_KEY = '38346591'; // Standard JioSaavn media decryption key
 // Community-hosted Saavn REST mirrors (fallback)
 const BACKUP_ENDPOINTS = [
   'https://saavn-api-eight.vercel.app/api',
-  'https://saavn.dev/api',
   'https://saavn.me/api',
+  'https://jiosaavn-api-privateindexer.vercel.app/api',
 ];
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
