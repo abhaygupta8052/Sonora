@@ -16,241 +16,143 @@
 }
 
 /* ========================================================================= */
-/* 11 Dynamic App Visual Themes (CSS Custom Properties)                      */
+/* 11 Dynamic App Visual Themes (CSS Custom Properties with RGB channels)    */
 /* ========================================================================= */
 
 :root {
-  --theme-accent: #8b5cf6;
-  --theme-accent-hover: #7c3aed;
-  --theme-accent-glow: rgba(139, 92, 246, 0.35);
-  --theme-bg-dark: #090D16;
-  --theme-surface-dark: #0e1424;
-  --theme-card-dark: #161F33;
-  --theme-card-hover: #1e2b45;
-  --theme-border-dark: #232F48;
-  --theme-text-dark: #F8FAFC;
-  --theme-muted-dark: #94A3B8;
+  --theme-accent-rgb: 139 92 246;
+  --theme-accent-hover-rgb: 124 58 237;
+  --theme-bg-dark-rgb: 9 13 22;
+  --theme-surface-dark-rgb: 14 20 36;
+  --theme-card-dark-rgb: 22 31 51;
+  --theme-card-hover-rgb: 30 43 69;
+  --theme-border-dark-rgb: 35 47 72;
 }
 
 /* 1. Classic */
 .theme-classic {
-  --theme-accent: #8b5cf6;
-  --theme-accent-hover: #7c3aed;
-  --theme-accent-glow: rgba(139, 92, 246, 0.35);
-  --theme-bg-dark: #090D16;
-  --theme-surface-dark: #0e1424;
-  --theme-card-dark: #161F33;
-  --theme-card-hover: #1e2b45;
-  --theme-border-dark: #232F48;
-  --theme-text-dark: #F8FAFC;
-  --theme-muted-dark: #94A3B8;
+  --theme-accent-rgb: 139 92 246;
+  --theme-accent-hover-rgb: 124 58 237;
+  --theme-bg-dark-rgb: 9 13 22;
+  --theme-surface-dark-rgb: 14 20 36;
+  --theme-card-dark-rgb: 22 31 51;
+  --theme-card-hover-rgb: 30 43 69;
+  --theme-border-dark-rgb: 35 47 72;
 }
 
-/* 2. Neumorphic (Light Warm Mode) */
+/* 2. Neumorphic */
 .theme-neumorphic {
-  --theme-accent: #a3937a;
-  --theme-accent-hover: #8c7c65;
-  --theme-accent-glow: rgba(163, 147, 122, 0.35);
-  --theme-bg-dark: #ede8df;
-  --theme-surface-dark: #e5dfd3;
-  --theme-card-dark: #f5f2eb;
-  --theme-card-hover: #ece6dc;
-  --theme-border-dark: #d8cebf;
-  --theme-text-dark: #2d261e;
-  --theme-muted-dark: #7a6e60;
+  --theme-accent-rgb: 163 147 122;
+  --theme-accent-hover-rgb: 140 124 101;
+  --theme-bg-dark-rgb: 237 232 223;
+  --theme-surface-dark-rgb: 229 223 211;
+  --theme-card-dark-rgb: 245 242 235;
+  --theme-card-hover-rgb: 236 230 220;
+  --theme-border-dark-rgb: 216 206 191;
 }
 
-/* 3. Vibrant (Bold Electric Purple) */
+/* 3. Vibrant */
 .theme-vibrant {
-  --theme-accent: #a855f7;
-  --theme-accent-hover: #9333ea;
-  --theme-accent-glow: rgba(168, 85, 247, 0.45);
-  --theme-bg-dark: #0f051d;
-  --theme-surface-dark: #17082e;
-  --theme-card-dark: #220d40;
-  --theme-card-hover: #30135c;
-  --theme-border-dark: #43197a;
-  --theme-text-dark: #FAF5FF;
-  --theme-muted-dark: #C084FC;
+  --theme-accent-rgb: 168 85 247;
+  --theme-accent-hover-rgb: 147 51 234;
+  --theme-bg-dark-rgb: 15 5 29;
+  --theme-surface-dark-rgb: 23 8 46;
+  --theme-card-dark-rgb: 34 13 64;
+  --theme-card-hover-rgb: 48 19 92;
+  --theme-border-dark-rgb: 67 25 122;
 }
 
-/* 4. Minimal (Deep Navy & Electric Blue) */
+/* 4. Minimal */
 .theme-minimal {
-  --theme-accent: #3b82f6;
-  --theme-accent-hover: #2563eb;
-  --theme-accent-glow: rgba(59, 130, 246, 0.4);
-  --theme-bg-dark: #0b1120;
-  --theme-surface-dark: #0f172a;
-  --theme-card-dark: #162238;
-  --theme-card-hover: #1e2f4d;
-  --theme-border-dark: #243656;
-  --theme-text-dark: #F8FAFC;
-  --theme-muted-dark: #94A3B8;
+  --theme-accent-rgb: 59 130 246;
+  --theme-accent-hover-rgb: 37 99 235;
+  --theme-bg-dark-rgb: 11 17 32;
+  --theme-surface-dark-rgb: 15 23 42;
+  --theme-card-dark-rgb: 22 34 56;
+  --theme-card-hover-rgb: 30 47 77;
+  --theme-border-dark-rgb: 36 54 86;
 }
 
-/* 5. Glass Pro (Liquid Oceanic Cyan) */
+/* 5. Glass Pro */
 .theme-glass-pro {
-  --theme-accent: #0ea5e9;
-  --theme-accent-hover: #0284c7;
-  --theme-accent-glow: rgba(14, 165, 233, 0.4);
-  --theme-bg-dark: #041726;
-  --theme-surface-dark: #08253d;
-  --theme-card-dark: #0d3454;
-  --theme-card-hover: #13466f;
-  --theme-border-dark: #1a5685;
-  --theme-text-dark: #F0F9FF;
-  --theme-muted-dark: #7DD3FC;
+  --theme-accent-rgb: 14 165 233;
+  --theme-accent-hover-rgb: 2 132 199;
+  --theme-bg-dark-rgb: 4 23 38;
+  --theme-surface-dark-rgb: 8 37 61;
+  --theme-card-dark-rgb: 13 52 84;
+  --theme-card-hover-rgb: 19 70 111;
+  --theme-border-dark-rgb: 26 86 133;
 }
 
-/* 6. Cherry Blossom (Deep Crimson & Rose) */
+/* 6. Cherry Blossom */
 .theme-cherry-blossom {
-  --theme-accent: #f43f5e;
-  --theme-accent-hover: #e11d48;
-  --theme-accent-glow: rgba(244, 63, 94, 0.4);
-  --theme-bg-dark: #17040b;
-  --theme-surface-dark: #240713;
-  --theme-card-dark: #360c1d;
-  --theme-card-hover: #4d132b;
-  --theme-border-dark: #631938;
-  --theme-text-dark: #FFF1F2;
-  --theme-muted-dark: #FDA4AF;
+  --theme-accent-rgb: 244 63 94;
+  --theme-accent-hover-rgb: 225 29 72;
+  --theme-bg-dark-rgb: 23 4 11;
+  --theme-surface-dark-rgb: 36 7 19;
+  --theme-card-dark-rgb: 54 12 29;
+  --theme-card-hover-rgb: 77 19 43;
+  --theme-border-dark-rgb: 99 25 56;
 }
 
-/* 7. Sunset Shades (Warm Apricot & Coral) */
+/* 7. Sunset Shades */
 .theme-sunset-shades {
-  --theme-accent: #f97316;
-  --theme-accent-hover: #ea580c;
-  --theme-accent-glow: rgba(249, 115, 22, 0.4);
-  --theme-bg-dark: #170802;
-  --theme-surface-dark: #240d04;
-  --theme-card-dark: #381608;
-  --theme-card-hover: #4f210d;
-  --theme-border-dark: #692d13;
-  --theme-text-dark: #FFF7ED;
-  --theme-muted-dark: #FDBA74;
+  --theme-accent-rgb: 249 115 22;
+  --theme-accent-hover-rgb: 234 88 12;
+  --theme-bg-dark-rgb: 23 8 2;
+  --theme-surface-dark-rgb: 36 13 4;
+  --theme-card-dark-rgb: 56 22 8;
+  --theme-card-hover-rgb: 79 33 13;
+  --theme-border-dark-rgb: 105 45 19;
 }
 
-/* 8. Arc Studio (Emerald Teal & Cyan) */
+/* 8. Arc Studio */
 .theme-arc-studio {
-  --theme-accent: #06b6d4;
-  --theme-accent-hover: #0891b2;
-  --theme-accent-glow: rgba(6, 182, 212, 0.4);
-  --theme-bg-dark: #021814;
-  --theme-surface-dark: #04241e;
-  --theme-card-dark: #093830;
-  --theme-card-hover: #0e4f44;
-  --theme-border-dark: #14695b;
-  --theme-text-dark: #ECFEFF;
-  --theme-muted-dark: #67E8F9;
+  --theme-accent-rgb: 6 182 212;
+  --theme-accent-hover-rgb: 8 145 178;
+  --theme-bg-dark-rgb: 2 24 20;
+  --theme-surface-dark-rgb: 4 36 30;
+  --theme-card-dark-rgb: 9 56 48;
+  --theme-card-hover-rgb: 14 79 68;
+  --theme-border-dark-rgb: 20 105 91;
 }
 
-/* 9. Cosmic Aurora (Midnight Indigo & Lavender) */
+/* 9. Cosmic Aurora */
 .theme-cosmic-aurora {
-  --theme-accent: #818cf8;
-  --theme-accent-hover: #6366f1;
-  --theme-accent-glow: rgba(129, 140, 248, 0.4);
-  --theme-bg-dark: #070914;
-  --theme-surface-dark: #0d1124;
-  --theme-card-dark: #151b38;
-  --theme-card-hover: #1e274f;
-  --theme-border-dark: #2a366b;
-  --theme-text-dark: #EEF2FF;
-  --theme-muted-dark: #A5B4FC;
+  --theme-accent-rgb: 129 140 248;
+  --theme-accent-hover-rgb: 99 102 241;
+  --theme-bg-dark-rgb: 7 9 20;
+  --theme-surface-dark-rgb: 13 17 36;
+  --theme-card-dark-rgb: 21 27 56;
+  --theme-card-hover-rgb: 30 39 79;
+  --theme-border-dark-rgb: 42 54 107;
 }
 
-/* 10. Midnight Ember (Zinc Carbon & Coral Ember) */
+/* 10. Midnight Ember */
 .theme-midnight-ember {
-  --theme-accent: #f97316;
-  --theme-accent-hover: #ea580c;
-  --theme-accent-glow: rgba(249, 115, 22, 0.4);
-  --theme-bg-dark: #09090b;
-  --theme-surface-dark: #121215;
-  --theme-card-dark: #1c1c21;
-  --theme-card-hover: #27272e;
-  --theme-border-dark: #383842;
-  --theme-text-dark: #FAFAFA;
-  --theme-muted-dark: #A1A1AA;
+  --theme-accent-rgb: 249 115 22;
+  --theme-accent-hover-rgb: 234 88 12;
+  --theme-bg-dark-rgb: 9 9 11;
+  --theme-surface-dark-rgb: 18 18 21;
+  --theme-card-dark-rgb: 28 28 33;
+  --theme-card-hover-rgb: 39 39 46;
+  --theme-border-dark-rgb: 56 56 66;
 }
 
-/* 11. Emerald Gold (Forest Green & Gold) */
+/* 11. Emerald Gold */
 .theme-emerald-gold {
-  --theme-accent: #eab308;
-  --theme-accent-hover: #ca8a04;
-  --theme-accent-glow: rgba(234, 179, 8, 0.4);
-  --theme-bg-dark: #04140a;
-  --theme-surface-dark: #082112;
-  --theme-card-dark: #0e331d;
-  --theme-card-hover: #15472a;
-  --theme-border-dark: #1e6139;
-  --theme-text-dark: #FEFCE8;
-  --theme-muted-dark: #FDE047;
+  --theme-accent-rgb: 234 179 8;
+  --theme-accent-hover-rgb: 202 138 4;
+  --theme-bg-dark-rgb: 4 20 10;
+  --theme-surface-dark-rgb: 8 33 18;
+  --theme-card-dark-rgb: 14 51 29;
+  --theme-card-hover-rgb: 21 71 42;
+  --theme-border-dark-rgb: 30 97 57;
 }
 
-/* ========================================================================= */
-/* Direct Theme CSS Overrides (Ensures 100% Theme Reflection Across App)     */
-/* ========================================================================= */
-
-.dark, .dark body {
-  background-color: var(--theme-bg-dark, #090D16) !important;
-  color: var(--theme-text-dark, #F8FAFC);
-}
-
-.dark .bg-dark-bg {
-  background-color: var(--theme-bg-dark, #090D16) !important;
-}
-
-.dark .bg-dark-surface {
-  background-color: var(--theme-surface-dark, #0e1424) !important;
-}
-
-.dark .bg-dark-card {
-  background-color: var(--theme-card-dark, #161F33) !important;
-}
-
-.dark .bg-dark-cardHover:hover {
-  background-color: var(--theme-card-hover, #1e2b45) !important;
-}
-
-.dark .border-dark-border {
-  border-color: var(--theme-border-dark, #232F48) !important;
-}
-
-/* Dynamic Brand Buttons, Highlights & Equalizer */
-.bg-brand-600 {
-  background-color: var(--theme-accent, #7c3aed) !important;
-}
-
-.bg-brand-500 {
-  background-color: var(--theme-accent, #8b5cf6) !important;
-}
-
-.hover\:bg-brand-500:hover {
-  background-color: var(--theme-accent-hover, #7c3aed) !important;
-}
-
-.text-brand-400,
-.text-brand-500,
-.text-brand-600,
-.dark .text-brand-400,
-.dark .text-brand-500,
-.dark .text-brand-600 {
-  color: var(--theme-accent, #8b5cf6) !important;
-}
-
-.border-brand-500,
-.border-brand-600 {
-  border-color: var(--theme-accent, #8b5cf6) !important;
-}
-
-.fill-brand-500,
-.fill-brand-600 {
-  fill: var(--theme-accent, #8b5cf6) !important;
-}
-
-.shadow-brand-600\/30,
-.shadow-brand-500\/25,
-.shadow-brand-500\/10 {
-  box-shadow: 0 10px 25px -5px var(--theme-accent-glow, rgba(139, 92, 246, 0.35)) !important;
+/* Base Body Styles */
+.dark body {
+  background-color: rgb(var(--theme-bg-dark-rgb, 9 13 22));
 }
 
 /* Custom subtle scrollbar */

@@ -20,18 +20,15 @@ export interface AppThemeConfig {
   name: string;
   description: string;
   icon: string;
-  swatches: [string, string, string]; // [bg/base, primary/accent, highlight]
+  swatches: [string, string, string];
   isLight?: boolean;
-  accent: string;
-  accentHover: string;
-  accentGlow: string;
-  bgDark: string;
-  surfaceDark: string;
-  cardDark: string;
-  cardHover: string;
-  borderDark: string;
-  textDark: string;
-  mutedDark: string;
+  accentRgb: string;
+  accentHoverRgb: string;
+  bgDarkRgb: string;
+  surfaceDarkRgb: string;
+  cardDarkRgb: string;
+  cardHoverRgb: string;
+  borderDarkRgb: string;
 }
 
 export const APP_THEMES: AppThemeConfig[] = [
@@ -41,16 +38,13 @@ export const APP_THEMES: AppThemeConfig[] = [
     description: 'Dark glassmorphism with dynamic artwork backdrop',
     icon: '🎵',
     swatches: ['#1e1b4b', '#7c3aed', '#0f172a'],
-    accent: '#8b5cf6',
-    accentHover: '#7c3aed',
-    accentGlow: 'rgba(139, 92, 246, 0.35)',
-    bgDark: '#090D16',
-    surfaceDark: '#0e1424',
-    cardDark: '#161F33',
-    cardHover: '#1e2b45',
-    borderDark: '#232F48',
-    textDark: '#F8FAFC',
-    mutedDark: '#94A3B8'
+    accentRgb: '139 92 246',
+    accentHoverRgb: '124 58 237',
+    bgDarkRgb: '9 13 22',
+    surfaceDarkRgb: '14 20 36',
+    cardDarkRgb: '22 31 51',
+    cardHoverRgb: '30 43 69',
+    borderDarkRgb: '35 47 72'
   },
   {
     id: 'neumorphic',
@@ -59,16 +53,13 @@ export const APP_THEMES: AppThemeConfig[] = [
     icon: '☁️',
     swatches: ['#e5dfd3', '#b8a88f', '#f2efe9'],
     isLight: true,
-    accent: '#a3937a',
-    accentHover: '#8c7c65',
-    accentGlow: 'rgba(163, 147, 122, 0.35)',
-    bgDark: '#ede8df',
-    surfaceDark: '#e5dfd3',
-    cardDark: '#f5f2eb',
-    cardHover: '#ece6dc',
-    borderDark: '#d8cebf',
-    textDark: '#2d261e',
-    mutedDark: '#7a6e60'
+    accentRgb: '163 147 122',
+    accentHoverRgb: '140 124 101',
+    bgDarkRgb: '237 232 223',
+    surfaceDarkRgb: '229 223 211',
+    cardDarkRgb: '245 242 235',
+    cardHoverRgb: '236 230 220',
+    borderDarkRgb: '216 206 191'
   },
   {
     id: 'vibrant',
@@ -76,16 +67,13 @@ export const APP_THEMES: AppThemeConfig[] = [
     description: 'Bold purple gradient with high-contrast controls',
     icon: '✨',
     swatches: ['#3b0764', '#a855f7', '#8b5cf6'],
-    accent: '#a855f7',
-    accentHover: '#9333ea',
-    accentGlow: 'rgba(168, 85, 247, 0.45)',
-    bgDark: '#0f051d',
-    surfaceDark: '#17082e',
-    cardDark: '#220d40',
-    cardHover: '#30135c',
-    borderDark: '#43197a',
-    textDark: '#FAF5FF',
-    mutedDark: '#C084FC'
+    accentRgb: '168 85 247',
+    accentHoverRgb: '147 51 234',
+    bgDarkRgb: '15 5 29',
+    surfaceDarkRgb: '23 8 46',
+    cardDarkRgb: '34 13 64',
+    cardHoverRgb: '48 19 92',
+    borderDarkRgb: '67 25 122'
   },
   {
     id: 'minimal',
@@ -93,16 +81,13 @@ export const APP_THEMES: AppThemeConfig[] = [
     description: 'Clean dark design with full-width lyrics & crisp hero art',
     icon: '🔲',
     swatches: ['#0f172a', '#3b82f6', '#1e293b'],
-    accent: '#3b82f6',
-    accentHover: '#2563eb',
-    accentGlow: 'rgba(59, 130, 246, 0.4)',
-    bgDark: '#0b1120',
-    surfaceDark: '#0f172a',
-    cardDark: '#162238',
-    cardHover: '#1e2f4d',
-    borderDark: '#243656',
-    textDark: '#F8FAFC',
-    mutedDark: '#94A3B8'
+    accentRgb: '59 130 246',
+    accentHoverRgb: '37 99 235',
+    bgDarkRgb: '11 17 32',
+    surfaceDarkRgb: '15 23 42',
+    cardDarkRgb: '22 34 56',
+    cardHoverRgb: '30 47 77',
+    borderDarkRgb: '36 54 86'
   },
   {
     id: 'glass-pro',
@@ -110,16 +95,13 @@ export const APP_THEMES: AppThemeConfig[] = [
     description: 'Liquid glass throughout, over a drifting aurora backdrop',
     icon: '💎',
     swatches: ['#082f49', '#0ea5e9', '#0369a1'],
-    accent: '#0ea5e9',
-    accentHover: '#0284c7',
-    accentGlow: 'rgba(14, 165, 233, 0.4)',
-    bgDark: '#041726',
-    surfaceDark: '#08253d',
-    cardDark: '#0d3454',
-    cardHover: '#13466f',
-    borderDark: '#1a5685',
-    textDark: '#F0F9FF',
-    mutedDark: '#7DD3FC'
+    accentRgb: '14 165 233',
+    accentHoverRgb: '2 132 199',
+    bgDarkRgb: '4 23 38',
+    surfaceDarkRgb: '8 37 61',
+    cardDarkRgb: '13 52 84',
+    cardHoverRgb: '19 70 111',
+    borderDarkRgb: '26 86 133'
   },
   {
     id: 'cherry-blossom',
@@ -127,16 +109,13 @@ export const APP_THEMES: AppThemeConfig[] = [
     description: 'Deep crimson & rose bloom with soft blush glows',
     icon: '🌸',
     swatches: ['#4c0519', '#be123c', '#f43f5e'],
-    accent: '#f43f5e',
-    accentHover: '#e11d48',
-    accentGlow: 'rgba(244, 63, 94, 0.4)',
-    bgDark: '#17040b',
-    surfaceDark: '#240713',
-    cardDark: '#360c1d',
-    cardHover: '#4d132b',
-    borderDark: '#631938',
-    textDark: '#FFF1F2',
-    mutedDark: '#FDA4AF'
+    accentRgb: '244 63 94',
+    accentHoverRgb: '225 29 72',
+    bgDarkRgb: '23 4 11',
+    surfaceDarkRgb: '36 7 19',
+    cardDarkRgb: '54 12 29',
+    cardHoverRgb: '77 19 43',
+    borderDarkRgb: '99 25 56'
   },
   {
     id: 'sunset-shades',
@@ -144,16 +123,13 @@ export const APP_THEMES: AppThemeConfig[] = [
     description: 'Warm gold, apricot & coral sunset gradient',
     icon: '🌅',
     swatches: ['#451a03', '#c2410c', '#f97316'],
-    accent: '#f97316',
-    accentHover: '#ea580c',
-    accentGlow: 'rgba(249, 115, 22, 0.4)',
-    bgDark: '#170802',
-    surfaceDark: '#240d04',
-    cardDark: '#381608',
-    cardHover: '#4f210d',
-    borderDark: '#692d13',
-    textDark: '#FFF7ED',
-    mutedDark: '#FDBA74'
+    accentRgb: '249 115 22',
+    accentHoverRgb: '234 88 12',
+    bgDarkRgb: '23 8 2',
+    surfaceDarkRgb: '36 13 4',
+    cardDarkRgb: '56 22 8',
+    cardHoverRgb: '79 33 13',
+    borderDarkRgb: '105 45 19'
   },
   {
     id: 'arc-studio',
@@ -161,16 +137,13 @@ export const APP_THEMES: AppThemeConfig[] = [
     description: 'Curved arch art frame with emerald teal & cyan glow',
     icon: '🌀',
     swatches: ['#022c22', '#0f766e', '#06b6d4'],
-    accent: '#06b6d4',
-    accentHover: '#0891b2',
-    accentGlow: 'rgba(6, 182, 212, 0.4)',
-    bgDark: '#021814',
-    surfaceDark: '#04241e',
-    cardDark: '#093830',
-    cardHover: '#0e4f44',
-    borderDark: '#14695b',
-    textDark: '#ECFEFF',
-    mutedDark: '#67E8F9'
+    accentRgb: '6 182 212',
+    accentHoverRgb: '8 145 178',
+    bgDarkRgb: '2 24 20',
+    surfaceDarkRgb: '4 36 30',
+    cardDarkRgb: '9 56 48',
+    cardHoverRgb: '14 79 68',
+    borderDarkRgb: '20 105 91'
   },
   {
     id: 'cosmic-aurora',
@@ -178,16 +151,13 @@ export const APP_THEMES: AppThemeConfig[] = [
     description: 'Floating orb artwork with midnight indigo & violet aurora',
     icon: '🌌',
     swatches: ['#0b0f19', '#3730a3', '#818cf8'],
-    accent: '#818cf8',
-    accentHover: '#6366f1',
-    accentGlow: 'rgba(129, 140, 248, 0.4)',
-    bgDark: '#070914',
-    surfaceDark: '#0d1124',
-    cardDark: '#151b38',
-    cardHover: '#1e274f',
-    borderDark: '#2a366b',
-    textDark: '#EEF2FF',
-    mutedDark: '#A5B4FC'
+    accentRgb: '129 140 248',
+    accentHoverRgb: '99 102 241',
+    bgDarkRgb: '7 9 20',
+    surfaceDarkRgb: '13 17 36',
+    cardDarkRgb: '21 27 56',
+    cardHoverRgb: '30 39 79',
+    borderDarkRgb: '42 54 107'
   },
   {
     id: 'midnight-ember',
@@ -195,16 +165,13 @@ export const APP_THEMES: AppThemeConfig[] = [
     description: 'Deep navy palette with a coral ember accent (ColorHunt)',
     icon: '🔥',
     swatches: ['#18181b', '#52525b', '#a1a1aa'],
-    accent: '#f97316',
-    accentHover: '#ea580c',
-    accentGlow: 'rgba(249, 115, 22, 0.4)',
-    bgDark: '#09090b',
-    surfaceDark: '#121215',
-    cardDark: '#1c1c21',
-    cardHover: '#27272e',
-    borderDark: '#383842',
-    textDark: '#FAFAFA',
-    mutedDark: '#A1A1AA'
+    accentRgb: '249 115 22',
+    accentHoverRgb: '234 88 12',
+    bgDarkRgb: '9 9 11',
+    surfaceDarkRgb: '18 18 21',
+    cardDarkRgb: '28 28 33',
+    cardHoverRgb: '39 39 46',
+    borderDarkRgb: '56 56 66'
   },
   {
     id: 'emerald-gold',
@@ -212,16 +179,13 @@ export const APP_THEMES: AppThemeConfig[] = [
     description: 'Dark forest green with royal gold highlights (ColorHunt)',
     icon: '🌿',
     swatches: ['#14532d', '#65a30d', '#eab308'],
-    accent: '#eab308',
-    accentHover: '#ca8a04',
-    accentGlow: 'rgba(234, 179, 8, 0.4)',
-    bgDark: '#04140a',
-    surfaceDark: '#082112',
-    cardDark: '#0e331d',
-    cardHover: '#15472a',
-    borderDark: '#1e6139',
-    textDark: '#FEFCE8',
-    mutedDark: '#FDE047'
+    accentRgb: '234 179 8',
+    accentHoverRgb: '202 138 4',
+    bgDarkRgb: '4 20 10',
+    surfaceDarkRgb: '8 33 18',
+    cardDarkRgb: '14 51 29',
+    cardHoverRgb: '21 71 42',
+    borderDarkRgb: '30 97 57'
   }
 ];
 
@@ -299,31 +263,27 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   useEffect(() => {
     const root = document.documentElement;
 
-    // Remove old theme classes
+    // Set theme class on root
     APP_THEMES.forEach((t) => root.classList.remove(`theme-${t.id}`));
     root.classList.add(`theme-${appTheme}`);
 
-    // Always inject theme colors
-    root.style.setProperty('--theme-bg-dark', currentThemeConfig.bgDark);
-    root.style.setProperty('--theme-surface-dark', currentThemeConfig.surfaceDark);
-    root.style.setProperty('--theme-card-dark', currentThemeConfig.cardDark);
-    root.style.setProperty('--theme-card-hover', currentThemeConfig.cardHover);
-    root.style.setProperty('--theme-border-dark', currentThemeConfig.borderDark);
-    root.style.setProperty('--theme-text-dark', currentThemeConfig.textDark);
-    root.style.setProperty('--theme-muted-dark', currentThemeConfig.mutedDark);
+    // Inject RGB channel variables for Tailwind alpha-value resolution
+    root.style.setProperty('--theme-bg-dark-rgb', currentThemeConfig.bgDarkRgb);
+    root.style.setProperty('--theme-surface-dark-rgb', currentThemeConfig.surfaceDarkRgb);
+    root.style.setProperty('--theme-card-dark-rgb', currentThemeConfig.cardDarkRgb);
+    root.style.setProperty('--theme-card-hover-rgb', currentThemeConfig.cardHoverRgb);
+    root.style.setProperty('--theme-border-dark-rgb', currentThemeConfig.borderDarkRgb);
 
     if (syncAccent) {
-      root.style.setProperty('--theme-accent', currentThemeConfig.accent);
-      root.style.setProperty('--theme-accent-hover', currentThemeConfig.accentHover);
-      root.style.setProperty('--theme-accent-glow', currentThemeConfig.accentGlow);
+      root.style.setProperty('--theme-accent-rgb', currentThemeConfig.accentRgb);
+      root.style.setProperty('--theme-accent-hover-rgb', currentThemeConfig.accentHoverRgb);
     } else {
-      root.style.setProperty('--theme-accent', '#8b5cf6');
-      root.style.setProperty('--theme-accent-hover', '#7c3aed');
-      root.style.setProperty('--theme-accent-glow', 'rgba(139, 92, 246, 0.35)');
+      root.style.setProperty('--theme-accent-rgb', '139 92 246');
+      root.style.setProperty('--theme-accent-hover-rgb', '124 58 237');
     }
 
     if (document.body) {
-      document.body.style.backgroundColor = currentThemeConfig.bgDark;
+      document.body.style.backgroundColor = `rgb(${currentThemeConfig.bgDarkRgb})`;
     }
   }, [appTheme, syncAccent, currentThemeConfig]);
 
