@@ -10,12 +10,14 @@ import {
   Repeat1,
   Heart,
   ListPlus,
-  Volume2
+  Volume2,
+  Moon
 } from 'lucide-react';
 import { useAudioPlayer } from '../../context/AudioPlayerContext';
 import { useLibrary } from '../../context/LibraryContext';
 import { formatDuration } from '../../utils/formatters';
 import { AddToPlaylistModal } from '../common/AddToPlaylistModal';
+import { SleepTimerModal } from './SleepTimerModal';
 
 export const FullPlayer: React.FC = () => {
   const {
@@ -37,12 +39,15 @@ export const FullPlayer: React.FC = () => {
     setVolume,
     queue,
     queueIndex,
-    playTrack
+    playTrack,
+    isSleepTimerActive,
+    sleepTimerRemaining
   } = useAudioPlayer();
 
   const { isFavorite, toggleFavorite } = useLibrary();
   const [activeTab, setActiveTab] = useState<'player' | 'queue'>('player');
   const [isPlaylistModalOpen, setIsPlaylistModalOpen] = useState(false);
+  const [isSleepTimerModalOpen, setIsSleepTimerModalOpen] = useState(false);
 
   // Lock background scroll when full player is open to prevent unnecessary scrollbars
   useEffect(() => {
@@ -107,13 +112,33 @@ export const FullPlayer: React.FC = () => {
           </button>
         </div>
 
-        <button
-          onClick={() => setIsPlaylistModalOpen(true)}
-          className="p-2 -mr-2 rounded-full text-slate-300 hover:text-white hover:bg-white/10 transition-colors"
-          aria-label="Add to playlist"
-        >
-          <ListPlus className="w-5 h-5" />
-        </button>
+        <div className="flex items-center gap-1 -mr-2">
+          {/* Quick Sleep Timer Button */}
+          <button
+            onClick={() => setIsSleepTimerModalOpen(true)}
+            className={`p-2 rounded-full transition-all flex items-center gap-1 ${
+              isSleepTimerActive
+                ? 'bg-purple-600/30 text-purple-300 border border-purple-500/40 shadow-sm'
+                : 'text-slate-300 hover:text-white hover:bg-white/10'
+            }`}
+            title={
+              isSleepTimerActive && sleepTimerRemaining
+                ? `Sleep Timer active: ${Math.ceil(sleepTimerRemaining / 60)}m left`
+                : 'Set Sleep Timer & Audio Fade-Out'
+            }
+            aria-label="Sleep timer"
+          >
+            <Moon className={`w-5 h-5 ${isSleepTimerActive ? 'fill-purple-400 text-purple-400 animate-pulse' : ''}`} />
+          </button>
+
+          <button
+            onClick={() => setIsPlaylistModalOpen(true)}
+            className="p-2 rounded-full text-slate-300 hover:text-white hover:bg-white/10 transition-colors"
+            aria-label="Add to playlist"
+          >
+            <ListPlus className="w-5 h-5" />
+          </button>
+        </div>
       </header>
 
       {/* Content Body */}
@@ -301,6 +326,11 @@ export const FullPlayer: React.FC = () => {
         track={currentTrack}
         isOpen={isPlaylistModalOpen}
         onClose={() => setIsPlaylistModalOpen(false)}
+      />
+      {/* Sleep Timer & Fade-Out Modal */}
+      <SleepTimerModal
+        isOpen={isSleepTimerModalOpen}
+        onClose={() => setIsSleepTimerModalOpen(false)}
       />
     </div>
   );
