@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { useTheme } from '../context/ThemeContext';
+import { useTheme, APP_THEMES, AppThemeId } from '../context/ThemeContext';
 import { useLibrary } from '../context/LibraryContext';
 import { usePWAInstall } from '../hooks/usePWAInstall';
 import { storage } from '../utils/storage';
@@ -8,21 +8,27 @@ import {
   Sun,
   Moon,
   Laptop,
-  Radio,
-  Trash2,
   Download,
   Upload,
   Keyboard,
   ShieldCheck,
   Check,
   AlertTriangle,
-  Sparkles
+  Layers
 } from 'lucide-react';
 import { Modal } from '../components/common/Modal';
 import { InstallPromptModal } from '../components/pwa/InstallPromptModal';
 
 export const SettingsPage: React.FC = () => {
-  const { theme, setTheme } = useTheme();
+  const {
+    theme,
+    setTheme,
+    appTheme,
+    setAppTheme,
+    syncAccent,
+    setSyncAccent
+  } = useTheme();
+
   const { clearRecentlyPlayed, clearFavorites, refreshLibrary } = useLibrary();
   const { isInstalled, hasNativePrompt, promptInstall } = usePWAInstall();
 
@@ -98,13 +104,13 @@ export const SettingsPage: React.FC = () => {
   };
 
   return (
-    <div className="max-w-3xl space-y-8 animate-fade-in">
+    <div className="max-w-4xl space-y-8 animate-fade-in pb-12">
       <div>
         <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white">
           Settings & Preferences
         </h2>
         <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
-          Customize your Sonora streaming experience, theme, PWA installation, and offline data storage.
+          Customize your Sonora streaming experience, visual theme, PWA installation, and offline storage.
         </p>
       </div>
 
@@ -119,8 +125,8 @@ export const SettingsPage: React.FC = () => {
       <section className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-brand-950/60 via-indigo-950/40 to-slate-900/60 border border-brand-500/30 p-4 sm:p-6 space-y-4 shadow-lg">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-start sm:items-center gap-3 min-w-0">
-            <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-tr from-brand-600 to-pink-500 flex items-center justify-center text-white shadow-md shrink-0">
-              <Download className="w-5 h-5 sm:w-6 sm:h-6" />
+            <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-black border border-slate-700/60 overflow-hidden flex items-center justify-center text-white shadow-md shrink-0">
+              <img src="/logo.png" alt="Sonora Logo" className="w-full h-full object-contain p-1" />
             </div>
             <div className="min-w-0 flex-1">
               <h3 className="font-bold text-sm sm:text-base text-slate-900 dark:text-white">
@@ -151,13 +157,94 @@ export const SettingsPage: React.FC = () => {
         </div>
       </section>
 
-      {/* Appearance Section */}
+      {/* ========================================================================= */}
+      {/* 1. PLAYER APPEARANCE & APP THEME (From User Screenshot)                   */}
+      {/* ========================================================================= */}
+      <section className="bg-white dark:bg-dark-card rounded-2xl p-4 sm:p-6 border border-slate-200/80 dark:border-slate-800 space-y-6 shadow-sm">
+        {/* Header */}
+        <div className="flex items-start gap-3">
+          <div className="p-2.5 rounded-xl bg-brand-500/10 dark:bg-brand-500/20 text-brand-600 dark:text-brand-400 shrink-0">
+            <Layers className="w-5 h-5" />
+          </div>
+          <div>
+            <h3 className="font-extrabold text-base sm:text-lg text-slate-900 dark:text-white">
+              Player appearance & App theme
+            </h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              Choose the visual style for the player and entire app UI.
+            </p>
+          </div>
+        </div>
+
+        {/* Sync Accent Toggle Box */}
+        <div
+          onClick={() => setSyncAccent(!syncAccent)}
+          className="flex items-center justify-between p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800 cursor-pointer select-none hover:border-brand-500/50 transition-colors"
+        >
+          <div>
+            <h4 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100">
+              Sync accent colour with theme
+            </h4>
+            <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              Automatically update accent colors to complement the chosen player theme.
+            </p>
+          </div>
+          <input
+            type="checkbox"
+            checked={syncAccent}
+            onChange={(e) => setSyncAccent(e.target.checked)}
+            className="w-4 h-4 rounded text-brand-600 focus:ring-brand-500 accent-brand-600 shrink-0 cursor-pointer"
+          />
+        </div>
+
+        {/* 3-Column Theme Cards Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+          {APP_THEMES.map((t) => {
+            const isSelected = appTheme === t.id;
+            return (
+              <div
+                key={t.id}
+                onClick={() => setAppTheme(t.id)}
+                className={`group relative flex flex-col justify-between p-3.5 rounded-2xl border transition-all cursor-pointer select-none ${
+                  isSelected
+                    ? 'border-brand-500 bg-brand-500/10 shadow-lg shadow-brand-500/15 ring-1 ring-brand-500'
+                    : 'border-slate-200/80 dark:border-slate-800/80 bg-slate-50/50 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-800/60 hover:border-slate-300 dark:hover:border-slate-700'
+                }`}
+              >
+                {/* Top 3-stripe Color Palette Preview Bar */}
+                <div className="relative w-full h-8 rounded-lg overflow-hidden flex shadow-inner mb-3">
+                  <div className="flex-1 h-full" style={{ backgroundColor: t.swatches[0] }} />
+                  <div className="flex-1 h-full flex items-center justify-center" style={{ backgroundColor: t.swatches[1] }}>
+                    {isSelected && <Check className="w-3.5 h-3.5 text-white stroke-[3]" />}
+                  </div>
+                  <div className="flex-1 h-full" style={{ backgroundColor: t.swatches[2] }} />
+                </div>
+
+                {/* Theme Title & Icon */}
+                <div className="space-y-1">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-sm">{t.icon}</span>
+                    <h4 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100">
+                      {t.name}
+                    </h4>
+                  </div>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-snug">
+                    {t.description}
+                  </p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* Base Light/Dark Mode Section */}
       <section className="bg-white dark:bg-dark-card rounded-2xl p-4 sm:p-6 border border-slate-200/80 dark:border-slate-800 space-y-4">
         <h3 className="font-bold text-sm sm:text-base text-slate-900 dark:text-white">
-          Appearance & Theme
+          Base Color Mode
         </h3>
         <p className="text-xs text-slate-500 dark:text-slate-400">
-          Select your preferred visual aesthetic. Sonora features both deep obsidian dark mode and crisp slate light mode.
+          Switch between dark mode, light mode, or follow your system default.
         </p>
 
         <div className="grid grid-cols-3 gap-3">

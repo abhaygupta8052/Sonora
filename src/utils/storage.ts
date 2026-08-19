@@ -6,6 +6,8 @@ const STORAGE_KEYS = {
   RECENTLY_PLAYED: 'sonora_recently_played_v1',
   SEARCH_HISTORY: 'sonora_search_history_v1',
   THEME: 'sonora_theme_preference_v1',
+  APP_THEME: 'sonora_app_theme_v1',
+  SYNC_ACCENT: 'sonora_sync_accent_v1',
   VOLUME: 'sonora_player_volume_v1',
   AUDIO_QUALITY: 'sonora_audio_quality_v1',
   AUTOPLAY: 'sonora_autoplay_v1',
@@ -223,6 +225,23 @@ export const storage = {
 
   setTheme(theme: ThemeMode): void {
     localStorage.setItem(STORAGE_KEYS.THEME, theme);
+  },
+
+  getAppTheme(): string {
+    return localStorage.getItem(STORAGE_KEYS.APP_THEME) || 'classic';
+  },
+
+  setAppTheme(theme: string): void {
+    localStorage.setItem(STORAGE_KEYS.APP_THEME, theme);
+  },
+
+  getSyncAccent(): boolean {
+    const val = localStorage.getItem(STORAGE_KEYS.SYNC_ACCENT);
+    return val !== null ? val === 'true' : true;
+  },
+
+  setSyncAccent(enabled: boolean): void {
+    localStorage.setItem(STORAGE_KEYS.SYNC_ACCENT, enabled.toString());
   },
 
   getVolume(): number {
