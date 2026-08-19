@@ -334,7 +334,68 @@ async function fetchAllArtistSongs(artistName: string): Promise<Track[]> {
   return [];
 }
 
+/**
+ * Fetch real artist image from JioSaavn artist search API.
+ * Returns high-res Saavn CDN image URL or null.
+ */
+async function fetchArtistRealImage(artistName: string): Promise<string | null> {
+  // 1. JioSaavn artist search (official artist photo from Saavn CDN)
+  try {
+    const params = `?__call=search.getArtistResults&_format=json&n=5&q=${encodeURIComponent(artistName)}`;
+    const res = await fetch(`${SAAVN_PROXY}${params}`, { signal: AbortSignal.timeout(5000) });
+    if (res.ok) {
+      const data = await res.json();
+      const results: any[] = data?.results || data?.data || [];
+      for (const r of results) {
+        const name: string = safeString(r?.title || r?.name || '');
+        if (name.toLowerCase().includes(artistName.toLowerCase().split(' ')[0])) {
+          const img = safeString(r?.image || r?.picture || '');
+          if (img) return img.replace('50x50', '500x500').replace('150x150', '500x500');
+        }
+      }
+    }
+  } catch { /* ignore */ }
+
+  // 2. Community mirror artist search
+  for (const endpoint of BACKUP_ENDPOINTS) {
+    try {
+      const res = await fetch(`${endpoint}/search/artists?query=${encodeURIComponent(artistName)}&limit=3`, {
+        signal: AbortSignal.timeout(4000),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const list: any[] = data?.data?.results || data?.results || [];
+        if (list.length > 0) {
+          const img = safeString(
+            list[0]?.image?.[2]?.link ||
+            list[0]?.image?.[1]?.link ||
+            list[0]?.image?.[0]?.link ||
+            list[0]?.image || ''
+          );
+          if (img) return img;
+        }
+      }
+    } catch { /* next */ }
+  }
+
+  return null;
+}
+
+/**
+ * Extract artist image from the first song whose artist matches the search name.
+ */
+function extractArtistImageFromSongs(songs: Track[], artistName: string): string | null {
+  const firstName = artistName.toLowerCase().split(' ')[0];
+  for (const s of songs) {
+    if (s.artwork && String(s.artist).toLowerCase().includes(firstName)) {
+      return s.artwork;
+    }
+  }
+  return null;
+}
+
 // ─── Public API ──────────────────────────────────────────────────────────────
+
 
 export const musicApi = {
   /**
@@ -415,14 +476,22 @@ export const musicApi = {
 
   async getArtistDetails(id: string): Promise<Artist | null> {
     const artistName = decodeURIComponent(id).trim();
-    // Check local curated first
-    const local = FEATURED_ARTISTS.find((a) => a.id === artistName || a.name.toLowerCase() === artistName.toLowerCase());
-    // Fetch all songs (multi-page) regardless, to get real data
-    const songs = await fetchAllArtistSongs(artistName);
+    // Check local curated first (for bio, genres etc)
+    const local = FEATURED_ARTISTS.find(
+      (a) => a.id === artistName || a.name.toLowerCase() === artistName.toLowerCase()
+    );
 
-    // Derive artist image from first song artwork (real API data)
-    // or use local curated image if available
-    const artistImage = local?.image ||
+    // Fetch songs (multi-page) + real artist image in parallel
+    const [songs, realImage] = await Promise.all([
+      fetchAllArtistSongs(artistName),
+      fetchArtistRealImage(artistName),
+    ]);
+
+    // Best image: real API image > local curated > song artwork fallback > avatar API
+    const artistImage =
+      realImage ||
+      local?.image ||
+      extractArtistImageFromSongs(songs, artistName) ||
       `https://ui-avatars.com/api/?name=${encodeURIComponent(artistName)}&size=400&background=7c3aed&color=fff&bold=true&format=svg`;
 
     return {

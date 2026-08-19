@@ -37,10 +37,11 @@ function getGradient(genres?: string[]): string {
   return GENRE_GRADIENT.default;
 }
 
-// Reliable avatar fallback using DiceBear (always works, no hotlink blocks)
-function getAvatarUrl(name: string) {
-  const seed = encodeURIComponent(name.replace(/\s+/g, '-').toLowerCase());
-  return `https://api.dicebear.com/7.x/personas/svg?seed=${seed}&backgroundColor=7c3aed,6d28d9,4c1d95&backgroundType=gradientLinear`;
+// Initials placeholder (SVG) — instant, never fails
+function initialsAvatar(name: string): string {
+  const parts = name.trim().split(' ');
+  const initials = (parts[0]?.[0] ?? '') + (parts[1]?.[0] ?? '');
+  return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&size=400&background=6d28d9&color=ffffff&bold=true&format=svg&length=2`;
 }
 
 export const ArtistPage: React.FC = () => {
@@ -50,6 +51,7 @@ export const ArtistPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [showAll, setShowAll] = useState(false);
+  const [imgLoaded, setImgLoaded] = useState(false);
   const [imgError, setImgError] = useState(false);
   const [selectedTrackForPlaylist, setSelectedTrackForPlaylist] = useState<Track | null>(null);
   const { playTrack } = useAudioPlayer();
@@ -60,6 +62,7 @@ export const ArtistPage: React.FC = () => {
     setIsLoading(true);
     setShowAll(false);
     setImgError(false);
+    setImgLoaded(false);
 
     const fetchArtist = async () => {
       try {
@@ -104,6 +107,10 @@ export const ArtistPage: React.FC = () => {
   const displayTracks = showAll
     ? (artist?.topTracks ?? [])
     : (artist?.topTracks ?? []).slice(0, 10);
+
+  // Resolve which image to show
+  const artistName = artist?.name ?? decodeURIComponent(id ?? '');
+  const displayImage = artist?.image ?? '';
 
   // ── Loading skeleton ──────────────────────────────────────────────────────
   if (isLoading) {
@@ -150,20 +157,16 @@ export const ArtistPage: React.FC = () => {
     );
   }
 
-  const avatarSrc = imgError || !artist.image
-    ? getAvatarUrl(artist.name)
-    : artist.image;
-
   return (
     <div className="space-y-5 animate-fade-in">
       {/* ── Hero Card ─────────────────────────────────────────────────────────── */}
       <div className={`relative overflow-hidden rounded-2xl bg-gradient-to-br ${gradient} text-white shadow-2xl`}>
-        {/* Blur backdrop */}
+        {/* Blur backdrop using artist real image */}
         <div className="absolute inset-0 overflow-hidden">
           <div
             className="absolute inset-0 scale-110 blur-3xl opacity-25"
             style={{
-              backgroundImage: `url(${avatarSrc})`,
+              backgroundImage: `url(${displayImage})`,
               backgroundSize: 'cover',
               backgroundPosition: 'center',
             }}
@@ -174,12 +177,25 @@ export const ArtistPage: React.FC = () => {
         {/* Content */}
         <div className="relative z-10 p-4 sm:p-8">
           <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 items-center sm:items-end">
-            {/* Avatar */}
-            <div className="w-28 h-28 sm:w-44 sm:h-44 rounded-2xl overflow-hidden shadow-2xl ring-2 sm:ring-4 ring-white/20 shrink-0 bg-slate-800">
+            {/* Avatar with progressive load */}
+            <div className="w-28 h-28 sm:w-44 sm:h-44 rounded-2xl overflow-hidden shadow-2xl ring-2 sm:ring-4 ring-white/20 shrink-0 bg-slate-700 relative">
+              {/* Placeholder — always visible, fades out when real image loads */}
               <img
-                src={avatarSrc}
-                alt={artist.name}
-                className="w-full h-full object-cover"
+                src={initialsAvatar(artistName)}
+                alt=""
+                aria-hidden
+                className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 ${
+                  imgLoaded ? 'opacity-0' : 'opacity-100'
+                }`}
+              />
+              {/* Real image — fades in */}
+              <img
+                src={displayImage}
+                alt={artistName}
+                className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 ${
+                  imgLoaded ? 'opacity-100' : 'opacity-0'
+                }`}
+                onLoad={() => setImgLoaded(true)}
                 onError={() => setImgError(true)}
               />
             </div>
