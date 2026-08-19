@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useTheme } from '../../context/ThemeContext';
 import { usePWAInstall } from '../../hooks/usePWAInstall';
@@ -22,12 +22,22 @@ export const Topbar: React.FC<TopbarProps> = ({ onOpenInstallModal }) => {
   const { theme, resolvedTheme, setTheme } = useTheme();
   const { isInstallable, isInstalled } = usePWAInstall();
 
+  const [topbarQuery, setTopbarQuery] = useState('');
   const isSearchPage = location.pathname === '/search';
 
   const handleThemeToggle = () => {
     if (theme === 'dark') setTheme('light');
     else if (theme === 'light') setTheme('system');
     else setTheme('dark');
+  };
+
+  const handleTopbarSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const q = topbarQuery.trim();
+    if (q) {
+      navigate(`/search?q=${encodeURIComponent(q)}`);
+      setTopbarQuery('');
+    }
   };
 
   const getThemeIcon = () => {
@@ -74,17 +84,20 @@ export const Topbar: React.FC<TopbarProps> = ({ onOpenInstallModal }) => {
           </button>
         </div>
 
-        {/* Search Bar Shortcut (Desktop only when not on search page) */}
+        {/* Topbar Quick Search Input (Desktop only when not on search page) */}
         {!isSearchPage && (
-          <div className="hidden lg:block w-72 ml-4">
-            <button
-              onClick={() => navigate('/search')}
-              className="w-full flex items-center gap-2.5 px-4 py-2 rounded-full bg-slate-100 dark:bg-dark-card hover:bg-slate-200 dark:hover:bg-slate-800 border border-slate-200 dark:border-dark-border text-xs font-medium text-slate-400 transition-all text-left"
-            >
-              <Search className="w-3.5 h-3.5" />
-              <span>Search songs, artists...</span>
-            </button>
-          </div>
+          <form onSubmit={handleTopbarSearchSubmit} className="hidden lg:block w-72 ml-4">
+            <div className="relative flex items-center">
+              <Search className="w-3.5 h-3.5 absolute left-3.5 text-slate-400 pointer-events-none" />
+              <input
+                type="text"
+                value={topbarQuery}
+                onChange={(e) => setTopbarQuery(e.target.value)}
+                placeholder="Search songs, artists..."
+                className="w-full pl-9 pr-4 py-2 rounded-full bg-slate-100 dark:bg-dark-card hover:bg-slate-200 dark:hover:bg-slate-800 focus:bg-white dark:focus:bg-slate-900 border border-slate-200 dark:border-dark-border text-xs font-medium text-slate-900 dark:text-slate-100 placeholder-slate-400 transition-all focus:outline-none focus:ring-2 focus:ring-brand-500/30"
+              />
+            </div>
+          </form>
         )}
       </div>
 
