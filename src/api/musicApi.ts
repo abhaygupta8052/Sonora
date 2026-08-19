@@ -277,6 +277,63 @@ async function trendingSaavn(query: string): Promise<Track[]> {
   return [];
 }
 
+/**
+ * Fetch all songs by a specific artist name — fetches multiple pages to get more results.
+ * Used by ArtistPage to build a complete song list.
+ */
+async function fetchAllArtistSongs(artistName: string): Promise<Track[]> {
+  const allTracks: Track[] = [];
+  const seenIds = new Set<string>();
+
+  const addTracks = (tracks: Track[]) => {
+    for (const t of tracks) {
+      if (!seenIds.has(t.id) && t.streamUrl) {
+        seenIds.add(t.id);
+        allTracks.push(t);
+      }
+    }
+  };
+
+  // Fetch 3 pages from proxy in parallel for speed
+  try {
+    const pagePromises = [1, 2, 3].map(async (page) => {
+      const params = `?__call=search.getResults&_format=json&p=${page}&n=25&q=${encodeURIComponent(artistName)}`;
+      const res = await fetch(`${SAAVN_PROXY}${params}`, { signal: AbortSignal.timeout(7000) });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.results && Array.isArray(data.results)) {
+          return data.results.map(normalizeOfficialSong).filter((t: Track) => !!t.streamUrl);
+        }
+      }
+      return [] as Track[];
+    });
+    const pages = await Promise.allSettled(pagePromises);
+    for (const p of pages) {
+      if (p.status === 'fulfilled') addTracks(p.value);
+    }
+    if (allTracks.length > 0) return allTracks;
+  } catch (e) {
+    console.warn('Multi-page artist search failed, trying mirrors...', e);
+  }
+
+  // Fallback: community mirrors with higher limit
+  for (const endpoint of BACKUP_ENDPOINTS) {
+    try {
+      const res = await fetch(`${endpoint}/search/songs?query=${encodeURIComponent(artistName)}&limit=50`, {
+        signal: AbortSignal.timeout(6000),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const list = data?.data?.results || data?.results || [];
+        const tracks = list.map(normalizeProxyTrack).filter((t: Track) => !!t.streamUrl);
+        if (tracks.length > 0) return tracks;
+      }
+    } catch { /* next */ }
+  }
+
+  return [];
+}
+
 // ─── Public API ──────────────────────────────────────────────────────────────
 
 export const musicApi = {
@@ -357,23 +414,33 @@ export const musicApi = {
   },
 
   async getArtistDetails(id: string): Promise<Artist | null> {
-    const local = FEATURED_ARTISTS.find((a) => a.id === id);
-    if (local) return local;
-    try {
-      const songs = await this.getTrending(id);
-      return {
-        id,
-        name: decodeHtml(id.replace(/[-_]/g, ' ')),
-        image: songs[0]?.artwork || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=600',
-        bio: `Explore top trending tracks and discography by ${id}.`,
-        followerCount: 450000,
-        monthlyListeners: '3.8M',
-        genres: ['Popular', 'Bollywood', 'Pop'],
-        topTracks: songs,
-        albums: [],
-      };
-    } catch { /* ignore */ }
-    return FEATURED_ARTISTS[0];
+    const artistName = decodeURIComponent(id).trim();
+    // Check local curated first
+    const local = FEATURED_ARTISTS.find((a) => a.id === artistName || a.name.toLowerCase() === artistName.toLowerCase());
+    // Fetch all songs (multi-page) regardless, to get real data
+    const songs = await fetchAllArtistSongs(artistName);
+
+    // Derive artist image from first song artwork (real API data)
+    // or use local curated image if available
+    const artistImage = local?.image ||
+      `https://ui-avatars.com/api/?name=${encodeURIComponent(artistName)}&size=400&background=7c3aed&color=fff&bold=true&format=svg`;
+
+    return {
+      id: artistName,
+      name: local?.name || decodeHtml(artistName),
+      image: artistImage,
+      bio: local?.bio || `Explore all songs, hits and discography by ${artistName}.`,
+      followerCount: local?.followerCount || 500000,
+      monthlyListeners: local?.monthlyListeners || '1.2M',
+      genres: local?.genres || ['Bollywood', 'Popular'],
+      topTracks: songs.length > 0 ? songs : (local?.topTracks || []),
+      albums: local?.albums || [],
+    };
+  },
+
+  /** Public method to get all songs by artist name (multi-page) */
+  async getArtistSongs(artistName: string): Promise<Track[]> {
+    return fetchAllArtistSongs(artistName);
   },
 
   async getAlbumDetails(id: string): Promise<Album | null> {
