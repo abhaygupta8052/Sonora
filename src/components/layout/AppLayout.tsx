@@ -26,7 +26,7 @@ export const AppLayout: React.FC = () => {
   };
 
   return (
-    <div className="flex min-h-screen bg-dark-bg text-dark-text transition-colors duration-300">
+    <div className="flex min-h-screen bg-slate-50 dark:bg-dark-bg text-slate-900 dark:text-dark-text transition-colors duration-300">
       {/* Desktop Sidebar */}
       <Sidebar onOpenInstallModal={handleInstallTrigger} />
 

@@ -225,12 +225,20 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     storage.setSyncAccent(enabled);
   };
 
-  // Base theme mode — enforce dark mode on mobile and default unless user explicitly chose light
+  // Base theme mode — dynamically compute dark vs light based on user setting / OS preference
   useEffect(() => {
     const root = document.documentElement;
 
-    const isLightExplicit = theme === 'light' || currentThemeConfig.isLight;
-    const isDark = !isLightExplicit;
+    let isDark = true;
+    if (theme === 'light') {
+      isDark = false;
+    } else if (theme === 'dark') {
+      isDark = true;
+    } else if (theme === 'system') {
+      isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    } else {
+      isDark = !currentThemeConfig.isLight;
+    }
 
     setResolvedTheme(isDark ? 'dark' : 'light');
 
@@ -241,6 +249,24 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       root.classList.add('light');
       root.classList.remove('dark');
     }
+
+    // Also listen to system media query changes if on system mode
+    if (theme === 'system') {
+      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      const handleChange = (e: MediaQueryListEvent) => {
+        const dark = e.matches;
+        setResolvedTheme(dark ? 'dark' : 'light');
+        if (dark) {
+          root.classList.add('dark');
+          root.classList.remove('light');
+        } else {
+          root.classList.add('light');
+          root.classList.remove('dark');
+        }
+      };
+      mediaQuery.addEventListener('change', handleChange);
+      return () => mediaQuery.removeEventListener('change', handleChange);
+    }
   }, [theme, currentThemeConfig]);
 
   // Apply visual AppTheme CSS variables, document background, and root classes
@@ -250,11 +276,6 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     // Set theme class on root
     APP_THEMES.forEach((t) => root.classList.remove(`theme-${t.id}`));
     root.classList.add(`theme-${appTheme}`);
-
-    // Always enforce dark class unless explicitly light theme
-    if (!currentThemeConfig.isLight && theme !== 'light') {
-      root.classList.add('dark');
-    }
 
     // Inject RGB channel variables for Tailwind alpha-value resolution
     root.style.setProperty('--theme-bg-dark-rgb', currentThemeConfig.bgDarkRgb);
@@ -272,9 +293,14 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
 
     if (document.body) {
-      document.body.style.backgroundColor = `rgb(${currentThemeConfig.bgDarkRgb})`;
+      const isDark = resolvedTheme === 'dark';
+      if (isDark) {
+        document.body.style.backgroundColor = `rgb(${currentThemeConfig.bgDarkRgb})`;
+      } else {
+        document.body.style.backgroundColor = currentThemeConfig.isLight ? `rgb(${currentThemeConfig.bgDarkRgb})` : '#f8fafc';
+      }
     }
-  }, [appTheme, syncAccent, currentThemeConfig, theme]);
+  }, [appTheme, syncAccent, currentThemeConfig, resolvedTheme]);
 
   return (
     <ThemeContext.Provider
