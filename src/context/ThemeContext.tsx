@@ -225,39 +225,23 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     storage.setSyncAccent(enabled);
   };
 
-  // Base dark/light theme mode
+  // Base theme mode — enforce dark mode on mobile and default unless user explicitly chose light
   useEffect(() => {
     const root = document.documentElement;
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
 
-    const applyTheme = () => {
-      let isDark = theme === 'dark';
-      if (theme === 'system') {
-        isDark = mediaQuery.matches;
-      }
+    const isLightExplicit = theme === 'light' || currentThemeConfig.isLight;
+    const isDark = !isLightExplicit;
 
-      setResolvedTheme(isDark ? 'dark' : 'light');
+    setResolvedTheme(isDark ? 'dark' : 'light');
 
-      if (isDark) {
-        root.classList.add('dark');
-        root.classList.remove('light');
-      } else {
-        root.classList.add('light');
-        root.classList.remove('dark');
-      }
-    };
-
-    applyTheme();
-
-    const handleChange = () => {
-      if (theme === 'system') {
-        applyTheme();
-      }
-    };
-
-    mediaQuery.addEventListener('change', handleChange);
-    return () => mediaQuery.removeEventListener('change', handleChange);
-  }, [theme]);
+    if (isDark) {
+      root.classList.add('dark');
+      root.classList.remove('light');
+    } else {
+      root.classList.add('light');
+      root.classList.remove('dark');
+    }
+  }, [theme, currentThemeConfig]);
 
   // Apply visual AppTheme CSS variables, document background, and root classes
   useEffect(() => {
@@ -266,6 +250,11 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     // Set theme class on root
     APP_THEMES.forEach((t) => root.classList.remove(`theme-${t.id}`));
     root.classList.add(`theme-${appTheme}`);
+
+    // Always enforce dark class unless explicitly light theme
+    if (!currentThemeConfig.isLight && theme !== 'light') {
+      root.classList.add('dark');
+    }
 
     // Inject RGB channel variables for Tailwind alpha-value resolution
     root.style.setProperty('--theme-bg-dark-rgb', currentThemeConfig.bgDarkRgb);
@@ -285,7 +274,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     if (document.body) {
       document.body.style.backgroundColor = `rgb(${currentThemeConfig.bgDarkRgb})`;
     }
-  }, [appTheme, syncAccent, currentThemeConfig]);
+  }, [appTheme, syncAccent, currentThemeConfig, theme]);
 
   return (
     <ThemeContext.Provider

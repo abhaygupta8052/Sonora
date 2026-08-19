@@ -156,7 +156,7 @@ export const HomePage: React.FC = () => {
   return (
     <div className="space-y-8 animate-fade-in">
       {/* Category Pills Filter Bar */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none sticky top-16 z-20 bg-slate-50/90 dark:bg-dark-bg/90 backdrop-blur-md py-2 -mx-4 px-4 sm:-mx-6 sm:px-6">
+      <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none sticky top-16 z-20 bg-dark-bg/90 backdrop-blur-md py-2 -mx-4 px-4 sm:-mx-6 sm:px-6">
         <button
           onClick={() => setActiveFilter('all')}
           className={`px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all ${

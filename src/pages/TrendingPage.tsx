@@ -158,8 +158,8 @@ export const TrendingPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Category Navigation Pills */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none sticky top-16 z-20 bg-slate-50/90 dark:bg-dark-bg/90 backdrop-blur-md py-2 -mx-4 px-4 sm:-mx-6 sm:px-6">
+      {/* Category Tabs */}
+      <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none sticky top-16 z-20 bg-dark-bg/90 backdrop-blur-md py-2 -mx-4 px-4 sm:-mx-6 sm:px-6">
         {TRENDING_TABS.map((tab) => {
           const isSelected = activeTab === tab.id;
           return (
