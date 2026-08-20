@@ -11,6 +11,7 @@ import {
   Check
 } from 'lucide-react';
 import { usePWAInstall } from '../../hooks/usePWAInstall';
+import { useAudioPlayer } from '../../context/AudioPlayerContext';
 
 interface SidebarProps {
   onOpenInstallModal?: () => void;
@@ -18,6 +19,7 @@ interface SidebarProps {
 
 export const Sidebar: React.FC<SidebarProps> = ({ onOpenInstallModal }) => {
   const { isInstallable, isInstalled, hasNativePrompt, promptInstall } = usePWAInstall();
+  const { currentTrack } = useAudioPlayer();
 
   const handleInstallClick = async () => {
     if (hasNativePrompt) {
@@ -41,9 +43,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ onOpenInstallModal }) => {
 
   return (
     <>
-      <aside className="hidden md:flex flex-col w-64 lg:w-72 bg-white dark:bg-dark-surface border-r border-slate-200/80 dark:border-dark-border/80 p-5 shrink-0 select-none h-screen sticky top-0 transition-colors duration-300">
+      <aside
+        className={`hidden md:flex flex-col w-64 lg:w-72 bg-white dark:bg-dark-surface border-r border-slate-200/80 dark:border-dark-border/80 px-4 py-5 shrink-0 select-none h-screen sticky top-0 transition-all duration-300 overflow-y-auto scrollbar-none ${
+          currentTrack ? 'pb-28' : 'pb-6'
+        }`}
+      >
         {/* Brand Logo */}
-        <Link to="/" className="flex items-center gap-3 px-2 py-3 mb-6 group">
+        <Link to="/" className="flex items-center gap-3 px-2 py-3 mb-6 group shrink-0">
           <div className="w-10 h-10 rounded-2xl bg-black border border-slate-700/60 overflow-hidden flex items-center justify-center shadow-lg shadow-brand-500/20 group-hover:scale-105 transition-transform shrink-0">
             <img src="/logo.png" alt="Sonora Logo" className="w-full h-full object-contain p-0.5" />
           </div>
@@ -82,12 +88,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ onOpenInstallModal }) => {
         </nav>
 
         {/* Bottom PWA Install Banner */}
-        <div className="mt-auto pt-4 border-t border-slate-200/80 dark:border-dark-border/80">
+        <div className="mt-auto pt-4 border-t border-slate-200/80 dark:border-dark-border/80 shrink-0">
           {!isInstalled ? (
             <button
               onClick={handleInstallClick}
               disabled={!isInstallable && !onOpenInstallModal}
-              className="w-full flex items-center justify-between p-3 rounded-2xl bg-gradient-to-r from-brand-500/10 via-indigo-500/10 to-purple-500/10 hover:from-brand-500/20 hover:to-purple-500/20 border border-brand-500/20 hover:border-brand-500/40 text-brand-600 dark:text-brand-400 transition-all text-left group"
+              className="w-full flex items-center justify-between p-3 rounded-2xl bg-gradient-to-r from-brand-500/10 via-indigo-500/10 to-purple-500/10 hover:from-brand-500/20 hover:to-purple-500/20 border border-brand-500/20 hover:border-brand-500/40 text-brand-600 dark:text-brand-400 transition-all text-left group shadow-sm"
             >
               <div className="flex items-center gap-2.5">
                 <div className="p-2 rounded-xl bg-brand-500/10 dark:bg-brand-500/20 text-brand-600 dark:text-brand-400 group-hover:scale-110 transition-transform">
