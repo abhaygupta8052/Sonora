@@ -53,7 +53,9 @@ export async function resolvePlayable(track: Track): Promise<Track> {
     track.source === 'itunes' ||
     !track.streamUrl ||
     track.streamUrl.includes('audio-preview') ||
-    track.streamUrl.includes('youtube');
+    track.streamUrl.includes('youtube') ||
+    track.streamUrl.includes('preview.saavncdn.com') ||  // 30-sec clip domain — must resolve to full
+    track.streamUrl.includes('_96_p.mp4');               // low-quality preview suffix
 
   // If track already has direct audio stream (from JioSaavn / direct CDN), return it
   if (!needsResolution && track.streamUrl) {
@@ -89,7 +91,8 @@ export async function resolvePlayable(track: Track): Promise<Track> {
             normTargetArtist.split(' ').some((word) => word.length > 3 && normCandArtist.includes(word));
 
           return titleMatch || (titleMatch && artistMatch);
-        }) || results[0];
+        // Fallback: first result that actually has a full streamUrl (not a preview)
+        }) || results.find((r) => !!r.streamUrl && !r.streamUrl.includes('preview.saavncdn.com') && !r.streamUrl.includes('_96_p.mp4'));
 
         if (bestCandidate && bestCandidate.streamUrl) {
           const resolved: Track = {

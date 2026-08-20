@@ -49,3 +49,13 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     </BrowserRouter>
   </React.StrictMode>
 );
+
+// Dismiss splash screen after React has mounted
+const splash = document.getElementById('splash');
+if (splash) {
+  // Small delay so the first frame of the app paints before hiding splash
+  setTimeout(() => {
+    splash.classList.add('hidden');
+    splash.addEventListener('transitionend', () => splash.remove(), { once: true });
+  }, 500);
+}

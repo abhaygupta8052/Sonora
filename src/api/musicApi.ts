@@ -2,6 +2,7 @@ import CryptoJS from 'crypto-js';
 import { Track, Artist, Album, Playlist, SearchResults } from './types';
 import { FEATURED_TRACKS, CURATED_PLAYLISTS, FEATURED_ARTISTS } from './curatedData';
 import { ytMusicService } from '../services/ytmusic';
+import { detectMood, getMoodById, MoodDefinition } from '../utils/moodData';
 
 // ─── API Endpoints ──────────────────────────────────────────────────────────
 const SAAVN_PROXY = '/api/saavn'; // Vercel serverless function (no CORS)
@@ -169,10 +170,13 @@ function normalizeOfficialSong(item: any): Track {
   if (!streamUrl) {
     const preview = item.media_preview_url || moreInfo.media_preview_url || item.preview_url;
     if (preview && typeof preview === 'string') {
-      streamUrl = preview
-        .replace('preview.saavncdn.com', 'aac.saavncdn.com')
-        .replace('_96_p.mp4', '_320.mp4')
-        .replace('_96.mp4', '_320.mp4');
+      // Only use preview URL if it resolves to the full CDN domain (not the clip preview domain)
+      if (!preview.includes('preview.saavncdn.com')) {
+        streamUrl = preview
+          .replace('_96_p.mp4', '_320.mp4')
+          .replace('_96.mp4', '_320.mp4');
+      }
+      // preview.saavncdn.com URLs are 30-second clips — leave streamUrl empty so resolvePlayable upgrades them
     }
   }
 
@@ -285,7 +289,9 @@ async function searchItunes(query: string): Promise<Track[]> {
             albumId: safeString(item.collectionId),
             duration: Math.round((item.trackTimeMillis || 180000) / 1000),
             artwork: artwork || 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=600&auto=format&fit=crop&q=80',
-            streamUrl: safeString(item.previewUrl || ''),
+            // iTunes previewUrl is only a 30-second clip — intentionally leave streamUrl empty
+            // so resolvePlayable() always fetches the full JioSaavn stream for this track.
+            streamUrl: '',
             provider: 'saavn',
             source: 'itunes',
             releaseYear: safeString(item.releaseDate ? item.releaseDate.substring(0, 4) : '2024'),
@@ -558,25 +564,37 @@ function extractArtistsFromTracks(tracks: Track[]): Artist[] {
 
 export const musicApi = {
   /**
-   * Search across JioSaavn + iTunes + YouTube Music in parallel.
+   * Search across JioSaavn + iTunes + YouTube Music in parallel with Mood Intelligence.
    */
   async search(query: string): Promise<SearchResults> {
     if (!query?.trim()) return { tracks: [], artists: [], albums: [], playlists: [] };
     const trimmed = query.trim();
+    const matchedMood = detectMood(trimmed);
 
-    // Run JioSaavn, iTunes, and YouTube Music discovery in parallel
-    const [saavnResult, itunesTracks, ytTracks] = await Promise.all([
+    // If query matches a mood/emotion, enrich search by querying both user input and curated mood target
+    const moodPromise =
+      matchedMood && matchedMood.primaryQuery.toLowerCase() !== trimmed.toLowerCase()
+        ? searchSaavn(matchedMood.primaryQuery)
+        : Promise.resolve({ tracks: [] as Track[], artists: [] as Artist[], albums: [] as Album[], playlists: [] as Playlist[] });
+
+    const [saavnResult, moodSaavnResult, itunesTracks, ytTracks] = await Promise.all([
       searchSaavn(trimmed),
-      searchItunes(trimmed),
-      ytMusicService.search(trimmed).catch(() => [] as Track[]),
+      moodPromise,
+      searchItunes(matchedMood ? matchedMood.primaryQuery : trimmed),
+      ytMusicService.search(matchedMood ? matchedMood.primaryQuery : trimmed).catch(() => [] as Track[]),
     ]);
 
-    // Merge tracks: JioSaavn + iTunes + YouTube Music
-    const rawCombined: Track[] = [...saavnResult.tracks, ...itunesTracks, ...ytTracks];
+    // Merge tracks: JioSaavn + Mood JioSaavn + iTunes + YouTube Music
+    const rawCombined: Track[] = [
+      ...saavnResult.tracks,
+      ...moodSaavnResult.tracks,
+      ...itunesTracks,
+      ...ytTracks
+    ];
     const combined = deduplicateTracks(rawCombined);
 
     // Collect artists
-    const combinedArtists: Artist[] = [...saavnResult.artists];
+    const combinedArtists: Artist[] = [...saavnResult.artists, ...moodSaavnResult.artists];
     if (combinedArtists.length < 3 && combined.length > 0) {
       const derived = extractArtistsFromTracks(combined);
       for (const d of derived) {
@@ -586,12 +604,15 @@ export const musicApi = {
       }
     }
 
+    const combinedAlbums = [...saavnResult.albums, ...moodSaavnResult.albums];
+    const combinedPlaylists = [...saavnResult.playlists, ...moodSaavnResult.playlists];
+
     if (combined.length > 0) {
       return {
         tracks: combined,
         artists: combinedArtists.length > 0 ? combinedArtists : FEATURED_ARTISTS.slice(0, 6),
-        albums: saavnResult.albums,
-        playlists: saavnResult.playlists.length > 0 ? saavnResult.playlists : CURATED_PLAYLISTS,
+        albums: combinedAlbums,
+        playlists: combinedPlaylists.length > 0 ? combinedPlaylists : CURATED_PLAYLISTS,
       };
     }
 
@@ -609,6 +630,30 @@ export const musicApi = {
       albums: [],
       playlists: CURATED_PLAYLISTS,
     };
+  },
+
+  /**
+   * Get songs tailored for a specific mood or vibe
+   */
+  async getMoodTracks(moodIdOrQuery: string): Promise<{ mood: MoodDefinition | null; tracks: Track[] }> {
+    const mood = getMoodById(moodIdOrQuery) || detectMood(moodIdOrQuery);
+    const searchTarget = mood ? mood.primaryQuery : moodIdOrQuery;
+
+    const queries = [searchTarget];
+    if (mood?.alternativeQueries?.[0]) {
+      queries.push(mood.alternativeQueries[0]);
+    }
+
+    try {
+      const batches = await Promise.all(queries.map((q) => this.getTrending(q)));
+      const combined = deduplicateTracks(batches.flat());
+      return {
+        mood,
+        tracks: combined.length > 0 ? combined : FEATURED_TRACKS
+      };
+    } catch {
+      return { mood, tracks: FEATURED_TRACKS };
+    }
   },
 
   /** Get trending songs by genre/language query */

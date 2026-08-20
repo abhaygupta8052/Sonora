@@ -4,6 +4,7 @@ import { useAudioPlayer } from '../../context/AudioPlayerContext';
 import { useLibrary } from '../../context/LibraryContext';
 import { Visualizer } from './Visualizer';
 import { SleepTimerModal, formatSecondsToTimer } from './SleepTimerModal';
+import { useSwipe } from '../../hooks/useSwipe';
 
 export const MiniPlayer: React.FC = () => {
   const {
@@ -13,6 +14,7 @@ export const MiniPlayer: React.FC = () => {
     duration,
     togglePlayPause,
     next,
+    previous,
     setIsFullPlayerOpen,
     isSleepTimerActive,
     sleepTimerRemaining
@@ -20,6 +22,13 @@ export const MiniPlayer: React.FC = () => {
   const { isFavorite, toggleFavorite } = useLibrary();
 
   const [isSleepModalOpen, setIsSleepModalOpen] = useState(false);
+
+  // Swipe left = next track, swipe right = previous track
+  const { handlers: swipeHandlers } = useSwipe({
+    onSwipeLeft: next,
+    onSwipeRight: previous,
+    threshold: 45,
+  });
 
   if (!currentTrack) return null;
 
@@ -29,8 +38,13 @@ export const MiniPlayer: React.FC = () => {
   return (
     <>
       <div
-        onClick={() => setIsFullPlayerOpen(true)}
-        className="md:hidden fixed bottom-[4.25rem] left-2.5 right-2.5 z-30 rounded-2xl bg-white/95 dark:bg-dark-card/95 backdrop-blur-2xl border border-slate-200/80 dark:border-white/10 shadow-[0_8px_30px_rgba(0,0,0,0.12)] dark:shadow-[0_12px_40px_rgba(0,0,0,0.6)] overflow-hidden cursor-pointer select-none transition-all duration-300 active:scale-[0.98]"
+        {...swipeHandlers}
+        onClick={(e) => {
+          // Let the swipe handler cancel this click if a swipe just happened
+          swipeHandlers.onClick(e);
+          if (!e.defaultPrevented) setIsFullPlayerOpen(true);
+        }}
+        className="md:hidden fixed bottom-[4.25rem] left-2.5 right-2.5 z-30 rounded-2xl bg-white/95 dark:bg-dark-card/95 backdrop-blur-2xl border border-slate-200/80 dark:border-white/10 shadow-[0_8px_30px_rgba(0,0,0,0.12)] dark:shadow-[0_12px_40px_rgba(0,0,0,0.6)] overflow-hidden cursor-pointer select-none transition-all duration-300 active:scale-[0.98] touch-pan-y"
       >
         {/* Top progress indicator bar */}
         <div className="w-full h-1 bg-slate-200 dark:bg-slate-800/80 overflow-hidden">

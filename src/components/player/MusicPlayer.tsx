@@ -22,6 +22,7 @@ import { QueueDrawer } from './QueueDrawer';
 import { Visualizer } from './Visualizer';
 import { useMediaSession } from '../../hooks/useMediaSession';
 import { useKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts';
+import { useSwipe } from '../../hooks/useSwipe';
 import { Link } from 'react-router-dom';
 
 export const MusicPlayer: React.FC = () => {
@@ -53,6 +54,13 @@ export const MusicPlayer: React.FC = () => {
   if (!currentTrack) return null;
 
   const isFav = isFavorite(currentTrack.id);
+
+  // Swipe support for touch-capable laptops / tablets on the desktop bar
+  const { handlers: desktopSwipe } = useSwipe({
+    onSwipeLeft: next,
+    onSwipeRight: previous,
+    threshold: 60,
+  });
 
   const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
     seek(parseFloat(e.target.value));
@@ -128,7 +136,7 @@ export const MusicPlayer: React.FC = () => {
           </div>
 
           {/* Center: Controls & Scrubber */}
-          <div className="flex flex-col items-center max-w-lg w-full flex-1 px-2">
+          <div className="flex flex-col items-center max-w-lg w-full flex-1 px-2 touch-pan-y" {...desktopSwipe}>
             {/* Playback Controls */}
             <div className="flex items-center gap-4 mb-1.5">
               <button

@@ -375,13 +375,19 @@ export const AudioPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ c
       currentTime: startTime
     });
 
-    // Resolve to high-fidelity audio twin if from YouTube
+    // Resolve to full audio stream (handles YouTube / iTunes / preview URLs)
     const resolvedTrack = await resolvePlayable(track);
+    // Update displayed track only when resolution found a different (better) match
     if (resolvedTrack && resolvedTrack.id !== track.id) {
       setCurrentTrack(resolvedTrack);
     }
 
-    const streamUrl = resolvedTrack.streamUrl || track.streamUrl;
+    // Use resolved streamUrl; never fall back to the original 30-sec preview URL
+    const streamUrl = resolvedTrack.streamUrl &&
+      !resolvedTrack.streamUrl.includes('preview.saavncdn.com') &&
+      !resolvedTrack.streamUrl.includes('_96_p.mp4')
+        ? resolvedTrack.streamUrl
+        : null;
 
     if (streamUrl) {
       audio.src = streamUrl;

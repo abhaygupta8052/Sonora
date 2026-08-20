@@ -15,7 +15,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
   onChange,
   onSearchSubmit,
   isLoading = false,
-  placeholder = 'Search songs, artists, albums, playlists...',
+  placeholder = "Search songs, artists, or your mood (e.g. 'mood off', 'romantic vibe', 'gym')...",
   autoFocus = false
 }) => {
   const [isFocused, setIsFocused] = useState(false);

@@ -18,6 +18,7 @@ import { useLibrary } from '../../context/LibraryContext';
 import { formatDuration } from '../../utils/formatters';
 import { AddToPlaylistModal } from '../common/AddToPlaylistModal';
 import { SleepTimerModal } from './SleepTimerModal';
+import { useSwipe } from '../../hooks/useSwipe';
 
 export const FullPlayer: React.FC = () => {
   const {
@@ -48,6 +49,13 @@ export const FullPlayer: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'player' | 'queue'>('player');
   const [isPlaylistModalOpen, setIsPlaylistModalOpen] = useState(false);
   const [isSleepTimerModalOpen, setIsSleepTimerModalOpen] = useState(false);
+
+  // Real-time swipe to change track
+  const { handlers: swipeHandlers, dragOffset, isDragging } = useSwipe({
+    onSwipeLeft:  next,
+    onSwipeRight: previous,
+    threshold: 48,
+  });
 
   // Lock background scroll when full player is open to prevent unnecessary scrollbars
   useEffect(() => {
@@ -143,10 +151,20 @@ export const FullPlayer: React.FC = () => {
 
       {/* Content Body */}
       {activeTab === 'player' ? (
-        <main className="relative z-10 flex-1 flex flex-col justify-between px-6 py-2 sm:py-4 max-w-md mx-auto w-full overflow-hidden">
-          {/* Artwork — scales dynamically with screen height so no scrolling is ever needed */}
-          <div className="flex-1 flex items-center justify-center my-auto min-h-0 py-2">
-            <div className="relative aspect-square max-h-[38vh] sm:max-h-[45vh] w-auto rounded-3xl overflow-hidden shadow-2xl ring-2 ring-white/15 bg-slate-900">
+        <main
+          className="relative z-10 flex-1 flex flex-col justify-between px-6 py-2 sm:py-4 max-w-md mx-auto w-full overflow-hidden touch-pan-y"
+          {...swipeHandlers}
+        >
+          {/* Artwork — follows finger in real time */}
+          <div className="flex-1 flex flex-col items-center justify-center my-auto min-h-0 py-2 gap-2">
+            <div
+              className="relative aspect-square max-h-[38vh] sm:max-h-[45vh] w-auto rounded-3xl overflow-hidden shadow-2xl ring-2 ring-white/15 bg-slate-900"
+              style={{
+                transform: `translateX(${dragOffset}px)`,
+                transition: isDragging ? 'none' : 'transform 0.35s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.3s',
+                opacity: isDragging ? Math.max(0.5, 1 - Math.abs(dragOffset) / 200) : 1,
+              }}
+            >
               <img
                 src={currentTrack.artwork}
                 alt={currentTrack.title}
@@ -155,6 +173,10 @@ export const FullPlayer: React.FC = () => {
                 }`}
               />
             </div>
+            {/* Swipe hint */}
+            <p className="text-[10px] text-slate-500 tracking-widest uppercase select-none pointer-events-none">
+              ← swipe to change song →
+            </p>
           </div>
 
           {/* Bottom Controls Group */}

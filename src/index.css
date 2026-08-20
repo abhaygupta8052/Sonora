@@ -155,23 +155,16 @@
   background-color: rgb(var(--theme-bg-dark-rgb, 9 13 22));
 }
 
-/* Custom subtle scrollbar */
+/* Hide scrollbar everywhere but keep functionality */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  display: none;
+  width: 0;
+  height: 0;
 }
 
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.25);
-  border-radius: 9999px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(148, 163, 184, 0.45);
+* {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
 }
 
 /* Animations */

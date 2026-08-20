@@ -35,7 +35,7 @@ export const SettingsPage: React.FC = () => {
   } = useTheme();
 
   const { clearRecentlyPlayed, clearFavorites, refreshLibrary } = useLibrary();
-  const { isInstalled, hasNativePrompt, promptInstall } = usePWAInstall();
+  const { isInstalled, hasNativePrompt, promptInstall, installCount } = usePWAInstall();
   const {
     sleepTimerOption,
     sleepTimerRemaining,
@@ -181,6 +181,21 @@ export const SettingsPage: React.FC = () => {
               <span>Installed</span>
             </div>
           )}
+        </div>
+
+        {/* PWA Install Count Badge */}
+        <div className="flex items-center gap-2.5 pt-1 border-t border-brand-500/20">
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-brand-500/15 border border-brand-500/30">
+            <Sparkles className="w-3.5 h-3.5 text-brand-400 shrink-0" />
+            <span className="text-xs font-extrabold text-brand-300 tabular-nums">
+              {installCount.toLocaleString()}
+            </span>
+          </div>
+          <p className="text-xs text-slate-400">
+            {installCount === 1
+              ? 'person has installed Sonora as a PWA on this device'
+              : 'times Sonora PWA has been installed on this device'}
+          </p>
         </div>
       </section>
 

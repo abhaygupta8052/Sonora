@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { storage } from '../utils/storage';
 
 interface BeforeInstallPromptEvent extends Event {
   readonly platforms: string[];
@@ -25,6 +26,7 @@ export function usePWAInstall() {
   });
   const [isIOS, setIsIOS] = useState<boolean>(false);
   const [isAndroid, setIsAndroid] = useState<boolean>(false);
+  const [installCount, setInstallCount] = useState<number>(() => storage.getPWAInstallCount());
 
   useEffect(() => {
     // Device detection
@@ -56,6 +58,8 @@ export function usePWAInstall() {
       setIsInstalled(true);
       setDeferredPrompt(null);
       (window as any).__pwa_deferred_prompt = null;
+      const newCount = storage.incrementPWAInstallCount();
+      setInstallCount(newCount);
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
@@ -107,6 +111,7 @@ export function usePWAInstall() {
     isIOS,
     isAndroid,
     hasNativePrompt: !!(deferredPrompt ?? getEarlyPrompt()),
-    promptInstall
+    promptInstall,
+    installCount
   };
 }

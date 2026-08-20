@@ -12,7 +12,8 @@ const STORAGE_KEYS = {
   AUDIO_QUALITY: 'sonora_audio_quality_v1',
   AUTOPLAY: 'sonora_autoplay_v1',
   LAST_PLAYED_TRACK: 'sonora_last_track_v1',
-  PLAYER_STATE: 'sonora_playback_state_v1'
+  PLAYER_STATE: 'sonora_playback_state_v1',
+  PWA_INSTALL_COUNT: 'sonora_pwa_install_count_v1'
 } as const;
 
 export interface SavedPlayerState {
@@ -347,5 +348,25 @@ export const storage = {
 
   clearAllData(): void {
     Object.values(STORAGE_KEYS).forEach(key => localStorage.removeItem(key));
+  },
+
+  // PWA Install Count
+  getPWAInstallCount(): number {
+    try {
+      const val = localStorage.getItem(STORAGE_KEYS.PWA_INSTALL_COUNT);
+      return val ? parseInt(val, 10) : 0;
+    } catch {
+      return 0;
+    }
+  },
+
+  incrementPWAInstallCount(): number {
+    const next = this.getPWAInstallCount() + 1;
+    try {
+      localStorage.setItem(STORAGE_KEYS.PWA_INSTALL_COUNT, next.toString());
+    } catch (e) {
+      console.error('Failed to save PWA install count', e);
+    }
+    return next;
   }
 };

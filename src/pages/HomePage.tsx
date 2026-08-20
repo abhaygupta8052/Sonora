@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { musicApi } from '../api/musicApi';
 import { Track, Playlist, Artist } from '../api/types';
 import { CURATED_GENRES, CURATED_PLAYLISTS, FEATURED_ARTISTS } from '../api/curatedData';
+import { MOODS } from '../utils/moodData';
 import { SongCard } from '../components/cards/SongCard';
 import { ArtistCard } from '../components/cards/ArtistCard';
 import { PlaylistCard } from '../components/cards/PlaylistCard';
@@ -374,34 +375,53 @@ export const HomePage: React.FC = () => {
 
       {/* Moods & Genres Stations */}
       {activeFilter === 'all' && (
-        <section>
-          <div className="flex items-center justify-between mb-4">
+        <section className="space-y-4">
+          <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-xl font-bold text-slate-900 dark:text-white">
-                Explore Moods & Stations
+              <h3 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <span>Explore Moods & Stations</span>
+                <span className="text-sm">🎭</span>
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                Find music tailored for any vibe
+                Find music tailored for your current feeling, vibe & activity
               </p>
             </div>
+
+            <button
+              onClick={() => navigate('/search?mood=all')}
+              className="inline-flex items-center gap-1 text-xs font-bold text-brand-600 dark:text-brand-400 hover:underline shrink-0"
+            >
+              <span>View All Moods</span>
+              <ChevronRight className="w-4 h-4" />
+            </button>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-            {CURATED_GENRES.map((genre) => (
+            {MOODS.slice(0, 8).map((mood) => (
               <div
-                key={genre.id}
-                onClick={() => navigate(`/search?q=${encodeURIComponent(genre.query)}`)}
-                className={`group relative overflow-hidden rounded-2xl p-5 bg-gradient-to-br ${genre.gradient} text-white cursor-pointer shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300 select-none min-h-[100px] flex flex-col justify-between`}
+                key={mood.id}
+                onClick={() => navigate(`/search?q=${encodeURIComponent(mood.name)}&mood=${mood.id}`)}
+                className={`group relative overflow-hidden rounded-2xl p-5 bg-gradient-to-br ${mood.gradient} text-white cursor-pointer shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300 select-none min-h-[110px] flex flex-col justify-between border border-white/10`}
               >
-                <div className="flex items-center justify-between">
-                  <span className="font-bold text-base sm:text-lg">{genre.name}</span>
-                  <div className="p-2 rounded-xl bg-white/10 backdrop-blur-md">
-                    <Music className="w-5 h-5" />
+                <div
+                  className="absolute -right-6 -bottom-6 w-24 h-24 rounded-full blur-xl pointer-events-none opacity-30"
+                  style={{ backgroundColor: mood.color }}
+                />
+
+                <div className="relative z-10 flex items-center justify-between">
+                  <div>
+                    <span className="text-xl mr-1.5">{mood.emoji}</span>
+                    <span className="font-bold text-sm sm:text-base">{mood.name}</span>
                   </div>
                 </div>
-                <span className="text-[11px] text-white/80 font-medium group-hover:underline">
-                  Play station →
-                </span>
+                <div className="relative z-10 flex items-center justify-between mt-2">
+                  <span className="text-[11px] text-white/80 font-medium line-clamp-1">
+                    {mood.hindiName}
+                  </span>
+                  <span className="text-[11px] text-white font-bold group-hover:underline shrink-0 ml-1">
+                    Play →
+                  </span>
+                </div>
               </div>
             ))}
           </div>
