@@ -3,8 +3,6 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useTheme } from '../../context/ThemeContext';
 import { usePWAInstall } from '../../hooks/usePWAInstall';
 import {
-  ChevronLeft,
-  ChevronRight,
   Sun,
   Moon,
   Laptop,
@@ -66,34 +64,16 @@ export const Topbar: React.FC<TopbarProps> = ({ onOpenInstallModal }) => {
           </div>
         </Link>
 
-        {/* History Nav */}
-        <div className="hidden md:flex items-center gap-1.5">
-          <button
-            onClick={() => navigate(-1)}
-            className="p-2 rounded-full bg-slate-100 dark:bg-dark-card hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition-colors"
-            aria-label="Go back"
-          >
-            <ChevronLeft className="w-4 h-4" />
-          </button>
-          <button
-            onClick={() => navigate(1)}
-            className="p-2 rounded-full bg-slate-100 dark:bg-dark-card hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition-colors"
-            aria-label="Go forward"
-          >
-            <ChevronRight className="w-4 h-4" />
-          </button>
-        </div>
-
         {/* Topbar Quick Search Input (Desktop only when not on search page) */}
         {!isSearchPage && (
-          <form onSubmit={handleTopbarSearchSubmit} className="hidden lg:block w-72 ml-4">
+          <form onSubmit={handleTopbarSearchSubmit} className="hidden md:block w-72 sm:w-80">
             <div className="relative flex items-center">
               <Search className="w-3.5 h-3.5 absolute left-3.5 text-slate-400 pointer-events-none" />
               <input
                 type="text"
                 value={topbarQuery}
                 onChange={(e) => setTopbarQuery(e.target.value)}
-                placeholder="Search songs, artists..."
+                placeholder="Search songs, artists, moods..."
                 className="w-full pl-9 pr-4 py-2 rounded-full bg-slate-100 dark:bg-dark-card hover:bg-slate-200 dark:hover:bg-slate-800 focus:bg-white dark:focus:bg-slate-900 border border-slate-200 dark:border-dark-border text-xs font-medium text-slate-900 dark:text-slate-100 placeholder-slate-400 transition-all focus:outline-none focus:ring-2 focus:ring-brand-500/30"
               />
             </div>
