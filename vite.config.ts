@@ -39,7 +39,8 @@ export default defineConfig({
         'icons/icon-512.png',
         'icons/maskable-icon-192.png',
         'icons/maskable-icon-512.png',
-        'icons/apple-touch-icon.png'
+        'icons/apple-touch-icon.png',
+        'silence.mp3'
       ],
       manifest: {
         name: 'Sonora — Music Stream & Discover',

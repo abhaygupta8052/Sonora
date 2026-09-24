@@ -6,7 +6,7 @@ import { resolvePlayable, isNeedsResolution, getDirectStreamUrl, preloadTrackAud
 
 export type SleepTimerOption = number | 'end-of-track' | null;
 
-// 44-byte silent WAV PCM data URI to keep mobile/PWA audio session alive uninterrupted during track switches
+// 44-byte silent WAV PCM data URI used as instant bridge if network resolution is needed
 export const SILENT_AUDIO = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=';
 
 interface AudioPlayerContextType {
@@ -81,9 +81,11 @@ export const AudioPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const savedState = storage.getPlayerState();
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const silentAudioRef = useRef<HTMLAudioElement | null>(null);
   const initialSeekDoneRef = useRef<boolean>(false);
   const lastSaveTimeRef = useRef<number>(0);
   const baseVolumeRef = useRef<number>(storage.getVolume());
+  const hasHandledEndRef = useRef<boolean>(false);
 
   const [currentTrack, setCurrentTrack] = useState<Track | null>(() => savedState?.currentTrack ?? null);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
@@ -171,6 +173,34 @@ export const AudioPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ c
     };
   }, [currentTrack, queue, originalQueue, queueIndex, currentTime, duration, repeatMode, isShuffled]);
 
+  // 🛡️ Mobile Keep-Alive Engine: Runs inaudible silence loop to prevent OS from suspending JS execution when screen is locked
+  const startSilentKeepAlive = useCallback(() => {
+    try {
+      if (!silentAudioRef.current) {
+        const sa = new Audio('/silence.mp3');
+        sa.loop = true;
+        sa.volume = 0.01;
+        sa.setAttribute('playsinline', 'true');
+        sa.setAttribute('webkit-playsinline', 'true');
+        silentAudioRef.current = sa;
+      }
+      const p = silentAudioRef.current.play();
+      if (p) p.catch(() => {});
+    } catch {
+      // Ignore
+    }
+  }, []);
+
+  const pauseSilentKeepAlive = useCallback(() => {
+    try {
+      if (silentAudioRef.current) {
+        silentAudioRef.current.pause();
+      }
+    } catch {
+      // Ignore
+    }
+  }, []);
+
   // Flush state to storage helper
   const flushStateToStorage = useCallback(() => {
     const s = stateRef.current;
@@ -220,7 +250,7 @@ export const AudioPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ c
     audio.volume = volume;
     audio.setAttribute('playsinline', 'true');
     audio.setAttribute('webkit-playsinline', 'true');
-    audio.crossOrigin = 'anonymous';
+    // Note: Do NOT set audio.crossOrigin = 'anonymous' to avoid CORS issues on mobile CDN streams
     audioRef.current = audio;
 
     // Restore track source if available from previous session
@@ -232,6 +262,18 @@ export const AudioPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ c
     const handleTimeUpdate = () => {
       const nowPos = audio.currentTime;
       setCurrentTime(nowPos);
+
+      // 📱 Mobile Lock-Screen Early Handoff:
+      // When ~0.45s or less remains on the track, trigger next track while audio samples
+      // are still actively flowing through the OS audio buffer to prevent mobile OS thread freeze
+      if (audio.duration && audio.duration > 8 && !hasHandledEndRef.current) {
+        const timeLeft = audio.duration - nowPos;
+        if (timeLeft <= 0.45 && nowPos > 5) {
+          hasHandledEndRef.current = true;
+          nextRef.current();
+          return;
+        }
+      }
 
       // Throttled persistence save every 2 seconds
       const nowMs = Date.now();
@@ -288,7 +330,9 @@ export const AudioPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ c
       setIsPlaying(true);
       setIsLoading(false);
       isTransitioningRef.current = false;
+      hasHandledEndRef.current = false;
       requestWakeLock();
+      startSilentKeepAlive();
     };
 
     const handlePause = () => {
@@ -296,13 +340,22 @@ export const AudioPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ c
       if (isTransitioningRef.current) return;
       setIsPlaying(false);
       releaseWakeLock();
+      pauseSilentKeepAlive();
       flushStateToStorage();
     };
 
     const handleEnded = () => {
+      // If already transitioned near the end of track, skip duplicate trigger
+      if (hasHandledEndRef.current) {
+        hasHandledEndRef.current = false;
+        return;
+      }
+      hasHandledEndRef.current = true;
+
       // 1. If sleep timer is set to finish current track, stop
       if (sleepTimerOptionRef.current === 'end-of-track') {
         audio.pause();
+        pauseSilentKeepAlive();
         setIsPlaying(false);
         cancelSleepTimerRef.current();
         return;
@@ -364,6 +417,7 @@ export const AudioPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ c
     return () => {
       flushStateToStorage();
       audio.pause();
+      pauseSilentKeepAlive();
       releaseWakeLock();
       audio.removeEventListener('timeupdate', handleTimeUpdate);
       audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
@@ -378,7 +432,7 @@ export const AudioPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ c
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [flushStateToStorage, requestWakeLock, releaseWakeLock]);
+  }, [flushStateToStorage, requestWakeLock, releaseWakeLock, startSilentKeepAlive, pauseSilentKeepAlive]);
 
   // Update volume and mute on audio element
   useEffect(() => {
@@ -455,19 +509,22 @@ export const AudioPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ c
           audioRef.current.pause();
           audioRef.current.volume = baseVolumeRef.current;
         }
+        pauseSilentKeepAlive();
         setIsPlaying(false);
         cancelSleepTimer();
       }
     }, 500);
 
     return () => clearInterval(timerInterval);
-  }, [sleepTimerOption, fadeOutSeconds, isMuted, duration, currentTime, cancelSleepTimer]);
+  }, [sleepTimerOption, fadeOutSeconds, isMuted, duration, currentTime, cancelSleepTimer, pauseSilentKeepAlive]);
 
   // Load and play a specific track (user interaction or direct selection)
   const loadAndPlayTrack = useCallback(async (track: Track, startTime = 0) => {
     if (!audioRef.current || !track) return;
     const audio = audioRef.current;
 
+    hasHandledEndRef.current = false;
+    startSilentKeepAlive();
     setPlaybackError(null);
     setIsLoading(true);
     setCurrentTrack(track);
@@ -554,11 +611,12 @@ export const AudioPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ c
       isTransitioningRef.current = false;
       setPlaybackError('Failed to load audio stream.');
     }
-  }, [addRecentlyPlayed]);
+  }, [addRecentlyPlayed, startSilentKeepAlive]);
 
   // Main playback action
   const playTrack = useCallback((track: Track, newQueue?: Track[], index?: number) => {
     initialSeekDoneRef.current = true;
+    startSilentKeepAlive();
     if (newQueue && newQueue.length > 0) {
       const targetIdx = index !== undefined && index >= 0 ? index : newQueue.findIndex(t => t.id === track.id);
       const validIdx = targetIdx >= 0 ? targetIdx : 0;
@@ -574,14 +632,16 @@ export const AudioPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ c
       });
     }
     loadAndPlayTrack(track, 0);
-  }, [loadAndPlayTrack]);
+  }, [loadAndPlayTrack, startSilentKeepAlive]);
 
   const togglePlayPause = useCallback(() => {
     if (!audioRef.current || !currentTrack) return;
     if (isPlaying) {
       audioRef.current.pause();
+      pauseSilentKeepAlive();
       setIsPlaying(false);
     } else {
+      startSilentKeepAlive();
       const playPromise = audioRef.current.play();
       if (playPromise !== undefined) {
         playPromise
@@ -593,20 +653,22 @@ export const AudioPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ c
           });
       }
     }
-  }, [isPlaying, currentTrack]);
+  }, [isPlaying, currentTrack, startSilentKeepAlive, pauseSilentKeepAlive]);
 
   const pause = useCallback(() => {
     if (audioRef.current && isPlaying) {
       audioRef.current.pause();
+      pauseSilentKeepAlive();
       setIsPlaying(false);
     }
-  }, [isPlaying]);
+  }, [isPlaying, pauseSilentKeepAlive]);
 
   const resume = useCallback(() => {
     if (audioRef.current && !isPlaying && currentTrack) {
+      startSilentKeepAlive();
       audioRef.current.play().then(() => setIsPlaying(true)).catch(() => {});
     }
-  }, [isPlaying, currentTrack]);
+  }, [isPlaying, currentTrack, startSilentKeepAlive]);
 
   // 🚀 Internal Next Track Handler with SYNCHRONOUS LOCK-SCREEN HANDOFF
   const playNextTrackInternal = useCallback(() => {
@@ -638,6 +700,8 @@ export const AudioPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
     const audio = audioRef.current;
     isTransitioningRef.current = true;
+    hasHandledEndRef.current = false;
+    startSilentKeepAlive();
     setQueueIndex(nextIndex);
     queueIndexRef.current = nextIndex;
 
@@ -720,7 +784,7 @@ export const AudioPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ c
           isTransitioningRef.current = false;
         });
     }
-  }, [addRecentlyPlayed]);
+  }, [addRecentlyPlayed, startSilentKeepAlive]);
 
   const next = useCallback(() => {
     playNextTrackInternal();
