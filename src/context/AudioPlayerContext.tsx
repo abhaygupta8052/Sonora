@@ -2,9 +2,12 @@ import React, { createContext, useContext, useState, useEffect, useRef, useCallb
 import { Track, RepeatMode } from '../api/types';
 import { storage } from '../utils/storage';
 import { useLibrary } from './LibraryContext';
-import { resolvePlayable } from '../services/resolve';
+import { resolvePlayable, isNeedsResolution, getDirectStreamUrl, preloadTrackAudio } from '../services/resolve';
 
 export type SleepTimerOption = number | 'end-of-track' | null;
+
+// 44-byte silent WAV PCM data URI to keep mobile/PWA audio session alive uninterrupted during track switches
+export const SILENT_AUDIO = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=';
 
 interface AudioPlayerContextType {
   currentTrack: Track | null;
@@ -106,6 +109,43 @@ export const AudioPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const [fadeOutSeconds, setFadeOutSeconds] = useState<number>(30);
   const sleepTimerEndTimeRef = useRef<number | null>(null);
 
+  // Forward refs to prevent stale closures and race conditions in event listeners
+  const currentTrackRef = useRef<Track | null>(currentTrack);
+  const queueRef = useRef<Track[]>(queue);
+  const queueIndexRef = useRef<number>(queueIndex);
+  const repeatModeRef = useRef<RepeatMode>(repeatMode);
+  const isPlayingRef = useRef<boolean>(isPlaying);
+  const nextRef = useRef<() => void>(() => {});
+  const sleepTimerOptionRef = useRef<SleepTimerOption>(sleepTimerOption);
+  const cancelSleepTimerRef = useRef<() => void>(() => {});
+  const wakeLockRef = useRef<any>(null);
+  const isTransitioningRef = useRef<boolean>(false);
+  const autoplayFetchingRef = useRef<boolean>(false);
+
+  useEffect(() => {
+    currentTrackRef.current = currentTrack;
+  }, [currentTrack]);
+
+  useEffect(() => {
+    queueRef.current = queue;
+  }, [queue]);
+
+  useEffect(() => {
+    queueIndexRef.current = queueIndex;
+  }, [queueIndex]);
+
+  useEffect(() => {
+    repeatModeRef.current = repeatMode;
+  }, [repeatMode]);
+
+  useEffect(() => {
+    isPlayingRef.current = isPlaying;
+  }, [isPlaying]);
+
+  useEffect(() => {
+    sleepTimerOptionRef.current = sleepTimerOption;
+  }, [sleepTimerOption]);
+
   // Keep a reference to current state to flush on pageunload/visibility change
   const stateRef = useRef({
     currentTrack,
@@ -148,11 +188,39 @@ export const AudioPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ c
     }
   }, []);
 
+  // Request screen wake lock to keep screen responsive during music playback
+  const requestWakeLock = useCallback(async () => {
+    if ('wakeLock' in navigator && !wakeLockRef.current) {
+      try {
+        wakeLockRef.current = await (navigator as any).wakeLock.request('screen');
+        wakeLockRef.current.addEventListener('release', () => {
+          wakeLockRef.current = null;
+        });
+      } catch {
+        // WakeLock request not permitted or unsupported
+      }
+    }
+  }, []);
+
+  const releaseWakeLock = useCallback(async () => {
+    if (wakeLockRef.current) {
+      try {
+        await wakeLockRef.current.release();
+        wakeLockRef.current = null;
+      } catch {
+        // Ignore
+      }
+    }
+  }, []);
+
   // Initialize audio element and restore persisted track if available
   useEffect(() => {
     const audio = new Audio();
     audio.preload = 'auto';
     audio.volume = volume;
+    audio.setAttribute('playsinline', 'true');
+    audio.setAttribute('webkit-playsinline', 'true');
+    audio.crossOrigin = 'anonymous';
     audioRef.current = audio;
 
     // Restore track source if available from previous session
@@ -219,20 +287,51 @@ export const AudioPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ c
     const handlePlay = () => {
       setIsPlaying(true);
       setIsLoading(false);
+      isTransitioningRef.current = false;
+      requestWakeLock();
     };
 
     const handlePause = () => {
+      // Do not treat brief pauses during active track transitions as user pause
+      if (isTransitioningRef.current) return;
       setIsPlaying(false);
+      releaseWakeLock();
       flushStateToStorage();
     };
 
+    const handleEnded = () => {
+      // 1. If sleep timer is set to finish current track, stop
+      if (sleepTimerOptionRef.current === 'end-of-track') {
+        audio.pause();
+        setIsPlaying(false);
+        cancelSleepTimerRef.current();
+        return;
+      }
+
+      // 2. If repeat single track is active
+      if (repeatModeRef.current === 'one') {
+        audio.currentTime = 0;
+        audio.play().catch((err) => console.warn('Single repeat replay failed', err));
+        return;
+      }
+
+      // 3. Play next song in queue seamlessly (works in background & lock screen)
+      nextRef.current();
+    };
+
     const handleError = (e: Event) => {
+      if (isTransitioningRef.current) return;
       console.warn('Audio playback error', e);
       setIsLoading(false);
-      setIsPlaying(false);
-      // Only show error if user was actively playing
-      if (initialSeekDoneRef.current) {
-        setPlaybackError('Unable to stream this track. Skipping or retry...');
+      // Auto-skip to next track if queue has songs
+      if (initialSeekDoneRef.current && queueRef.current.length > 1) {
+        setPlaybackError('Unable to stream this track. Skipping to next...');
+        setTimeout(() => {
+          nextRef.current();
+        }, 800);
+      } else {
+        setIsPlaying(false);
+        releaseWakeLock();
       }
     };
 
@@ -242,6 +341,7 @@ export const AudioPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ c
     audio.addEventListener('canplay', handleCanPlay);
     audio.addEventListener('play', handlePlay);
     audio.addEventListener('pause', handlePause);
+    audio.addEventListener('ended', handleEnded);
     audio.addEventListener('error', handleError);
 
     // Save state on tab close, page refresh, or PWA backgrounding
@@ -252,6 +352,8 @@ export const AudioPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ c
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'hidden') {
         flushStateToStorage();
+      } else if (document.visibilityState === 'visible' && isPlayingRef.current) {
+        requestWakeLock();
       }
     };
 
@@ -262,19 +364,21 @@ export const AudioPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ c
     return () => {
       flushStateToStorage();
       audio.pause();
+      releaseWakeLock();
       audio.removeEventListener('timeupdate', handleTimeUpdate);
       audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
       audio.removeEventListener('waiting', handleWaiting);
       audio.removeEventListener('canplay', handleCanPlay);
       audio.removeEventListener('play', handlePlay);
       audio.removeEventListener('pause', handlePause);
+      audio.removeEventListener('ended', handleEnded);
       audio.removeEventListener('error', handleError);
       window.removeEventListener('beforeunload', handlePageHide);
       window.removeEventListener('pagehide', handlePageHide);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [flushStateToStorage]);
+  }, [flushStateToStorage, requestWakeLock, releaseWakeLock]);
 
   // Update volume and mute on audio element
   useEffect(() => {
@@ -359,7 +463,7 @@ export const AudioPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ c
     return () => clearInterval(timerInterval);
   }, [sleepTimerOption, fadeOutSeconds, isMuted, duration, currentTime, cancelSleepTimer]);
 
-  // Play audio source with Audio-Twin swap resolution
+  // Load and play a specific track (user interaction or direct selection)
   const loadAndPlayTrack = useCallback(async (track: Track, startTime = 0) => {
     if (!audioRef.current || !track) return;
     const audio = audioRef.current;
@@ -367,30 +471,18 @@ export const AudioPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ c
     setPlaybackError(null);
     setIsLoading(true);
     setCurrentTrack(track);
+    currentTrackRef.current = track;
     addRecentlyPlayed(track);
 
-    // Save immediate state
     storage.setPlayerState({
       currentTrack: track,
       currentTime: startTime
     });
 
-    // Resolve to full audio stream (handles YouTube / iTunes / preview URLs)
-    const resolvedTrack = await resolvePlayable(track);
-    // Update displayed track only when resolution found a different (better) match
-    if (resolvedTrack && resolvedTrack.id !== track.id) {
-      setCurrentTrack(resolvedTrack);
-    }
-
-    // Use resolved streamUrl; never fall back to the original 30-sec preview URL
-    const streamUrl = resolvedTrack.streamUrl &&
-      !resolvedTrack.streamUrl.includes('preview.saavncdn.com') &&
-      !resolvedTrack.streamUrl.includes('_96_p.mp4')
-        ? resolvedTrack.streamUrl
-        : null;
-
-    if (streamUrl) {
-      audio.src = streamUrl;
+    const directStream = getDirectStreamUrl(track);
+    if (directStream) {
+      audio.loop = false;
+      audio.src = directStream;
       audio.load();
       if (startTime > 0) {
         try { audio.currentTime = startTime; } catch { /* ignore */ }
@@ -401,8 +493,10 @@ export const AudioPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ c
           .then(() => {
             setIsPlaying(true);
             setIsLoading(false);
+            isTransitioningRef.current = false;
           })
           .catch((err) => {
+            isTransitioningRef.current = false;
             if (err.name !== 'AbortError') {
               console.warn('Playback initiation error:', err);
               setPlaybackError('Auto-play blocked or audio format unavailable. Press play to start.');
@@ -410,21 +504,69 @@ export const AudioPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ c
             setIsLoading(false);
           });
       }
-    } else {
+      return;
+    }
+
+    // 🛡️ Silent Audio Bridge: keep OS audio session alive while resolving stream
+    audio.src = SILENT_AUDIO;
+    audio.loop = true;
+    audio.play().catch(() => {});
+
+    try {
+      const resolvedTrack = await resolvePlayable(track);
+      if (resolvedTrack && resolvedTrack.id !== track.id) {
+        setCurrentTrack(resolvedTrack);
+        currentTrackRef.current = resolvedTrack;
+      }
+
+      const streamUrl = getDirectStreamUrl(resolvedTrack);
+      if (streamUrl && audioRef.current) {
+        audioRef.current.loop = false;
+        audioRef.current.src = streamUrl;
+        audioRef.current.load();
+        if (startTime > 0) {
+          try { audioRef.current.currentTime = startTime; } catch { /* ignore */ }
+        }
+        const playPromise = audioRef.current.play();
+        if (playPromise !== undefined) {
+          playPromise
+            .then(() => {
+              setIsPlaying(true);
+              setIsLoading(false);
+              isTransitioningRef.current = false;
+            })
+            .catch((err) => {
+              isTransitioningRef.current = false;
+              if (err.name !== 'AbortError') {
+                console.warn('Playback initiation error:', err);
+                setPlaybackError('Auto-play blocked or audio format unavailable. Press play to start.');
+              }
+              setIsLoading(false);
+            });
+        }
+      } else {
+        setIsLoading(false);
+        isTransitioningRef.current = false;
+        setPlaybackError('Stream URL unavailable for this track.');
+      }
+    } catch {
       setIsLoading(false);
-      setPlaybackError('Stream URL unavailable for this track.');
+      isTransitioningRef.current = false;
+      setPlaybackError('Failed to load audio stream.');
     }
   }, [addRecentlyPlayed]);
 
-  // Main playback actions
+  // Main playback action
   const playTrack = useCallback((track: Track, newQueue?: Track[], index?: number) => {
     initialSeekDoneRef.current = true;
     if (newQueue && newQueue.length > 0) {
       const targetIdx = index !== undefined && index >= 0 ? index : newQueue.findIndex(t => t.id === track.id);
       const validIdx = targetIdx >= 0 ? targetIdx : 0;
       setQueue(newQueue);
+      queueRef.current = newQueue;
       setOriginalQueue(newQueue);
       setQueueIndex(validIdx);
+      queueIndexRef.current = validIdx;
       storage.setPlayerState({
         queue: newQueue,
         originalQueue: newQueue,
@@ -466,10 +608,13 @@ export const AudioPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ c
     }
   }, [isPlaying, currentTrack]);
 
-  const next = useCallback(() => {
-    if (queue.length === 0) return;
+  // 🚀 Internal Next Track Handler with SYNCHRONOUS LOCK-SCREEN HANDOFF
+  const playNextTrackInternal = useCallback(() => {
+    const q = queueRef.current;
+    const idx = queueIndexRef.current;
+    if (q.length === 0) return;
 
-    if (repeatMode === 'one' && currentTrack) {
+    if (repeatModeRef.current === 'one' && currentTrackRef.current) {
       if (audioRef.current) {
         audioRef.current.currentTime = 0;
         audioRef.current.play().catch(() => {});
@@ -477,48 +622,185 @@ export const AudioPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ c
       return;
     }
 
-    const nextIndex = queueIndex + 1;
-    if (nextIndex < queue.length) {
-      setQueueIndex(nextIndex);
-      loadAndPlayTrack(queue[nextIndex]);
-    } else if (repeatMode === 'all') {
-      setQueueIndex(0);
-      loadAndPlayTrack(queue[0]);
-    } else if (storage.getAutoplay()) {
-      // Autoplay similar tracks from radio/genre
-      const last = queue[queue.length - 1];
-      const genre = last?.genre || 'Bollywood';
-      import('../api/musicApi').then(({ musicApi }) => {
-        musicApi.getTrending(genre).then(similar => {
-          if (similar.length > 0) {
-            const added = similar.filter(st => !queue.some(q => q.id === st.id));
-            if (added.length > 0) {
-              const updated = [...queue, ...added];
-              setQueue(updated);
-              setQueueIndex(nextIndex);
-              loadAndPlayTrack(updated[nextIndex]);
-            }
-          }
-        });
-      });
+    let nextIndex = idx + 1;
+    if (nextIndex >= q.length) {
+      if (repeatModeRef.current === 'all') {
+        nextIndex = 0;
+      } else {
+        // Queue finished without repeat
+        setIsPlaying(false);
+        return;
+      }
     }
-  }, [queue, queueIndex, repeatMode, currentTrack, loadAndPlayTrack]);
+
+    const nextTrack = q[nextIndex];
+    if (!nextTrack || !audioRef.current) return;
+
+    const audio = audioRef.current;
+    isTransitioningRef.current = true;
+    setQueueIndex(nextIndex);
+    queueIndexRef.current = nextIndex;
+
+    const directStream = getDirectStreamUrl(nextTrack);
+
+    if (directStream) {
+      // 🚀 SYNCHRONOUS HANDOFF: Executes immediately within audio 'ended' or lock-screen action
+      audio.loop = false;
+      audio.src = directStream;
+      audio.currentTime = 0;
+      setCurrentTrack(nextTrack);
+      currentTrackRef.current = nextTrack;
+      addRecentlyPlayed(nextTrack);
+      storage.setPlayerState({
+        currentTrack: nextTrack,
+        queueIndex: nextIndex,
+        currentTime: 0
+      });
+
+      const playPromise = audio.play();
+      if (playPromise !== undefined) {
+        playPromise
+          .then(() => {
+            setIsPlaying(true);
+            setIsLoading(false);
+            isTransitioningRef.current = false;
+          })
+          .catch((err) => {
+            isTransitioningRef.current = false;
+            if (err.name !== 'AbortError') {
+              console.warn('Sync autoplay error on lock screen:', err);
+              setPlaybackError('Auto-play blocked or audio format unavailable. Press play to start.');
+            }
+          });
+      } else {
+        isTransitioningRef.current = false;
+      }
+    } else {
+      // 🛡️ SILENT AUDIO BRIDGE: Keeps OS lock-screen audio session alive during async network resolution
+      audio.src = SILENT_AUDIO;
+      audio.loop = true;
+      audio.play().catch(() => {});
+
+      setIsLoading(true);
+      setCurrentTrack(nextTrack);
+      currentTrackRef.current = nextTrack;
+      addRecentlyPlayed(nextTrack);
+
+      resolvePlayable(nextTrack)
+        .then((resolved) => {
+          const resolvedStream = getDirectStreamUrl(resolved);
+          if (resolvedStream && audioRef.current) {
+            audioRef.current.loop = false;
+            audioRef.current.src = resolvedStream;
+            audioRef.current.currentTime = 0;
+            audioRef.current.play()
+              .then(() => {
+                setIsPlaying(true);
+                setIsLoading(false);
+                isTransitioningRef.current = false;
+              })
+              .catch((err) => {
+                isTransitioningRef.current = false;
+                console.warn('Playback error after bridge:', err);
+              });
+
+            if (resolved.id !== nextTrack.id || resolved.streamUrl !== nextTrack.streamUrl) {
+              setCurrentTrack(resolved);
+              currentTrackRef.current = resolved;
+              setQueue((prev) => prev.map((t, i) => (i === nextIndex ? { ...t, ...resolved } : t)));
+            }
+          } else {
+            setIsLoading(false);
+            isTransitioningRef.current = false;
+            setPlaybackError('Stream URL unavailable for this track.');
+          }
+        })
+        .catch(() => {
+          setIsLoading(false);
+          isTransitioningRef.current = false;
+        });
+    }
+  }, [addRecentlyPlayed]);
+
+  const next = useCallback(() => {
+    playNextTrackInternal();
+  }, [playNextTrackInternal]);
 
   const previous = useCallback(() => {
-    if (queue.length === 0) return;
+    const q = queueRef.current;
+    const idx = queueIndexRef.current;
+    if (q.length === 0) return;
+
     if (audioRef.current && audioRef.current.currentTime > 3) {
       audioRef.current.currentTime = 0;
       return;
     }
-    const prevIndex = queueIndex - 1;
-    if (prevIndex >= 0) {
+
+    const prevIndex = idx - 1 >= 0 ? idx - 1 : q.length - 1;
+    const prevTrack = q[prevIndex];
+    if (prevTrack) {
       setQueueIndex(prevIndex);
-      loadAndPlayTrack(queue[prevIndex]);
-    } else {
-      setQueueIndex(queue.length - 1);
-      loadAndPlayTrack(queue[queue.length - 1]);
+      queueIndexRef.current = prevIndex;
+      loadAndPlayTrack(prevTrack);
     }
-  }, [queue, queueIndex, loadAndPlayTrack]);
+  }, [loadAndPlayTrack]);
+
+  useEffect(() => {
+    nextRef.current = next;
+  }, [next]);
+
+  useEffect(() => {
+    cancelSleepTimerRef.current = cancelSleepTimer;
+  }, [cancelSleepTimer]);
+
+  // ⚡ Proactively pre-resolve and pre-buffer upcoming tracks so lock-screen playback never stalls
+  useEffect(() => {
+    const q = queue;
+    const idx = queueIndex;
+    if (q.length === 0 || idx < 0) return;
+
+    const nextIdx = idx + 1 < q.length ? idx + 1 : (repeatMode === 'all' ? 0 : -1);
+    if (nextIdx >= 0 && q[nextIdx]) {
+      const nextTrack = q[nextIdx];
+      if (isNeedsResolution(nextTrack)) {
+        resolvePlayable(nextTrack)
+          .then((resolved) => {
+            if (resolved && resolved.streamUrl && !isNeedsResolution(resolved)) {
+              preloadTrackAudio(resolved.streamUrl);
+              setQueue((prev) => prev.map((t, i) => (i === nextIdx ? { ...t, ...resolved } : t)));
+              setOriginalQueue((prev) => prev.map((t) => (t.id === nextTrack.id ? { ...t, ...resolved } : t)));
+            }
+          })
+          .catch(() => {});
+      } else if (nextTrack.streamUrl) {
+        preloadTrackAudio(nextTrack.streamUrl);
+      }
+    }
+
+    // If approaching the end of queue and autoplay is enabled, pre-fetch recommended tracks BEFORE current song finishes
+    if (storage.getAutoplay() && idx >= q.length - 2 && !autoplayFetchingRef.current) {
+      autoplayFetchingRef.current = true;
+      const last = q[q.length - 1];
+      const genre = last?.genre || 'Bollywood';
+      import('../api/musicApi')
+        .then(({ musicApi }) => {
+          musicApi.getTrending(genre).then((similar) => {
+            autoplayFetchingRef.current = false;
+            if (similar && similar.length > 0) {
+              const currentQueue = queueRef.current;
+              const added = similar.filter((st) => !currentQueue.some((qTrack) => qTrack.id === st.id));
+              if (added.length > 0) {
+                const updated = [...currentQueue, ...added];
+                setQueue(updated);
+                setOriginalQueue((prev) => [...prev, ...added]);
+                storage.setPlayerState({ queue: updated });
+              }
+            }
+          }).catch(() => { autoplayFetchingRef.current = false; });
+        })
+        .catch(() => { autoplayFetchingRef.current = false; });
+    }
+  }, [queue, queueIndex, repeatMode]);
 
   const seek = useCallback((time: number) => {
     if (audioRef.current) {
@@ -539,7 +821,7 @@ export const AudioPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ c
   }, [isMuted]);
 
   const toggleMute = useCallback(() => {
-    setIsMuted(prev => !prev);
+    setIsMuted((prev) => !prev);
   }, []);
 
   const toggleShuffle = useCallback(() => {
@@ -554,7 +836,7 @@ export const AudioPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ c
     } else {
       if (originalQueue.length > 0 && currentTrack) {
         setQueue(originalQueue);
-        const idx = originalQueue.findIndex(t => t.id === currentTrack.id);
+        const idx = originalQueue.findIndex((t) => t.id === currentTrack.id);
         const validIdx = idx >= 0 ? idx : 0;
         setQueueIndex(validIdx);
         storage.setPlayerState({ queue: originalQueue, queueIndex: validIdx, isShuffled: false });
@@ -564,7 +846,7 @@ export const AudioPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ c
   }, [isShuffled, queue, originalQueue, queueIndex, currentTrack]);
 
   const cycleRepeatMode = useCallback(() => {
-    setRepeatMode(prev => {
+    setRepeatMode((prev) => {
       let nextMode: RepeatMode = 'off';
       if (prev === 'off') nextMode = 'all';
       else if (prev === 'all') nextMode = 'one';
@@ -576,23 +858,23 @@ export const AudioPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ c
   }, []);
 
   const addToQueue = useCallback((track: Track) => {
-    setQueue(prev => {
+    setQueue((prev) => {
       const updated = [...prev, track];
       storage.setPlayerState({ queue: updated });
       return updated;
     });
-    setOriginalQueue(prev => [...prev, track]);
+    setOriginalQueue((prev) => [...prev, track]);
   }, []);
 
   const playNext = useCallback((track: Track) => {
-    setQueue(prev => {
+    setQueue((prev) => {
       const updated = [...prev];
       const insertAt = queueIndex >= 0 ? queueIndex + 1 : 0;
       updated.splice(insertAt, 0, track);
       storage.setPlayerState({ queue: updated });
       return updated;
     });
-    setOriginalQueue(prev => {
+    setOriginalQueue((prev) => {
       const updated = [...prev];
       const insertAt = queueIndex >= 0 ? queueIndex + 1 : 0;
       updated.splice(insertAt, 0, track);
@@ -601,13 +883,13 @@ export const AudioPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ c
   }, [queueIndex]);
 
   const removeFromQueue = useCallback((index: number) => {
-    setQueue(prev => {
+    setQueue((prev) => {
       const updated = prev.filter((_, i) => i !== index);
       storage.setPlayerState({ queue: updated });
       return updated;
     });
     if (index < queueIndex) {
-      setQueueIndex(prev => {
+      setQueueIndex((prev) => {
         const nextIdx = prev - 1;
         storage.setPlayerState({ queueIndex: nextIdx });
         return nextIdx;
@@ -618,7 +900,7 @@ export const AudioPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ c
   }, [queueIndex, queue.length, next]);
 
   const reorderQueue = useCallback((startIndex: number, endIndex: number) => {
-    setQueue(prev => {
+    setQueue((prev) => {
       const result = Array.from(prev);
       const [removed] = result.splice(startIndex, 1);
       result.splice(endIndex, 0, removed);

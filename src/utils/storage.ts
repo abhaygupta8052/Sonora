@@ -13,7 +13,8 @@ const STORAGE_KEYS = {
   AUTOPLAY: 'sonora_autoplay_v1',
   LAST_PLAYED_TRACK: 'sonora_last_track_v1',
   PLAYER_STATE: 'sonora_playback_state_v1',
-  PWA_INSTALL_COUNT: 'sonora_pwa_install_count_v1'
+  PWA_INSTALL_COUNT: 'sonora_pwa_install_count_v1',
+  PWA_BANNER_DISMISSED: 'sonora_pwa_banner_dismissed_v1'
 } as const;
 
 export interface SavedPlayerState {
@@ -368,5 +369,25 @@ export const storage = {
       console.error('Failed to save PWA install count', e);
     }
     return next;
+  },
+
+  isPWABannerDismissed(): boolean {
+    try {
+      const ts = localStorage.getItem(STORAGE_KEYS.PWA_BANNER_DISMISSED);
+      if (!ts) return false;
+      const dismissedTime = parseInt(ts, 10);
+      // Dismiss for 24 hours
+      return Date.now() - dismissedTime < 24 * 60 * 60 * 1000;
+    } catch {
+      return false;
+    }
+  },
+
+  dismissPWABanner(): void {
+    try {
+      localStorage.setItem(STORAGE_KEYS.PWA_BANNER_DISMISSED, Date.now().toString());
+    } catch {
+      // Storage unavailable
+    }
   }
 };

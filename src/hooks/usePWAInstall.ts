@@ -26,13 +26,41 @@ export function usePWAInstall() {
   });
   const [isIOS, setIsIOS] = useState<boolean>(false);
   const [isAndroid, setIsAndroid] = useState<boolean>(false);
+  const [isMobile, setIsMobile] = useState<boolean>(false);
+  const [browserType, setBrowserType] = useState<
+    'safari' | 'chrome' | 'samsung' | 'firefox' | 'edge' | 'other'
+  >('other');
   const [installCount, setInstallCount] = useState<number>(() => storage.getPWAInstallCount());
 
   useEffect(() => {
-    // Device detection
+    // Device & Browser detection
     const userAgent = window.navigator.userAgent.toLowerCase();
-    setIsIOS(/iphone|ipad|ipod/.test(userAgent));
-    setIsAndroid(/android/.test(userAgent));
+    const isIosDevice =
+      /iphone|ipad|ipod/.test(userAgent) ||
+      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    const isAndroidDevice = /android/.test(userAgent);
+    const isMobileDevice =
+      isIosDevice ||
+      isAndroidDevice ||
+      /mobile|touch|tablet/.test(userAgent);
+
+    setIsIOS(isIosDevice);
+    setIsAndroid(isAndroidDevice);
+    setIsMobile(isMobileDevice);
+
+    if (/samsungbrowser/.test(userAgent)) {
+      setBrowserType('samsung');
+    } else if (/edg|edga|edgios/.test(userAgent)) {
+      setBrowserType('edge');
+    } else if (/firefox|fxios/.test(userAgent)) {
+      setBrowserType('firefox');
+    } else if (/crios|chrome/.test(userAgent) && !/chromium/.test(userAgent)) {
+      setBrowserType('chrome');
+    } else if (isIosDevice && /safari/.test(userAgent) && !/crios|fxios|edgios/.test(userAgent)) {
+      setBrowserType('safari');
+    } else {
+      setBrowserType('other');
+    }
 
     // Sync installed state from standalone display mode
     const standaloneMq = window.matchMedia('(display-mode: standalone)');
@@ -78,8 +106,7 @@ export function usePWAInstall() {
       window.removeEventListener('pwa-prompt-ready', handlePromptReady);
       window.removeEventListener('appinstalled', handleAppInstalled);
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [deferredPrompt]);
 
   const promptInstall = useCallback(async (): Promise<boolean> => {
     // Always try to pull the freshest deferred prompt from window
@@ -93,14 +120,13 @@ export function usePWAInstall() {
           setIsInstalled(true);
           setDeferredPrompt(null);
           (window as any).__pwa_deferred_prompt = null;
+          const newCount = storage.incrementPWAInstallCount();
+          setInstallCount(newCount);
           return true;
         }
       } catch (err) {
         console.error('Error prompting PWA install:', err);
       }
-    } else {
-      // Fallback: open browser install guide as external hint
-      console.info('No deferred prompt available. User must install via browser address bar.');
     }
     return false;
   }, [deferredPrompt]);
@@ -110,6 +136,8 @@ export function usePWAInstall() {
     isInstalled,
     isIOS,
     isAndroid,
+    isMobile,
+    browserType,
     hasNativePrompt: !!(deferredPrompt ?? getEarlyPrompt()),
     promptInstall,
     installCount

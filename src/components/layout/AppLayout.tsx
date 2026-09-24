@@ -6,6 +6,7 @@ import { BottomNav } from './BottomNav';
 import { OfflineBanner } from './OfflineBanner';
 import { MusicPlayer } from '../player/MusicPlayer';
 import { InstallPromptModal } from '../pwa/InstallPromptModal';
+import { MobileInstallBanner } from '../pwa/MobileInstallBanner';
 import { useAudioPlayer } from '../../context/AudioPlayerContext';
 import { usePWAInstall } from '../../hooks/usePWAInstall';
 
@@ -46,6 +47,9 @@ export const AppLayout: React.FC = () => {
 
         {/* Global Persistent Audio Player */}
         <MusicPlayer />
+
+        {/* Mobile Floating Install Banner */}
+        <MobileInstallBanner onOpenModal={() => setIsInstallModalOpen(true)} />
 
         {/* Mobile Bottom Navigation */}
         <BottomNav />

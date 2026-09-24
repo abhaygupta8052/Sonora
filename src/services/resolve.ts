@@ -8,20 +8,25 @@ interface MatchCache {
   [ytTrackId: string]: Track | null;
 }
 
+let memoryCache: MatchCache | null = null;
+
 function getMatchCache(): MatchCache {
+  if (memoryCache) return memoryCache;
   try {
     const raw = localStorage.getItem(CACHE_KEY);
-    return raw ? JSON.parse(raw) : {};
+    memoryCache = raw ? JSON.parse(raw) : {};
+    return memoryCache!;
   } catch {
-    return {};
+    memoryCache = {};
+    return memoryCache;
   }
 }
 
 function saveMatchCache(cache: MatchCache) {
+  memoryCache = cache;
   try {
     const keys = Object.keys(cache);
     if (keys.length > MAX_CACHE_ENTRIES) {
-      // Evict oldest entries
       const pruned: MatchCache = {};
       keys.slice(-MAX_CACHE_ENTRIES).forEach((k) => {
         pruned[k] = cache[k];
@@ -44,28 +49,85 @@ function normalize(str: string): string {
 }
 
 /**
+ * Checks whether a track requires resolution to a full CDN audio stream.
+ */
+export function isNeedsResolution(track: Track | null | undefined): boolean {
+  if (!track || !track.streamUrl) return true;
+  return (
+    track.source === 'youtube' ||
+    track.source === 'itunes' ||
+    track.streamUrl.includes('audio-preview') ||
+    track.streamUrl.includes('youtube') ||
+    track.streamUrl.includes('preview.saavncdn.com') || // 30-sec clip domain — must resolve to full
+    track.streamUrl.includes('_96_p.mp4')               // low-quality preview suffix
+  );
+}
+
+/**
+ * Synchronously retrieves a playable track if its streamUrl is already available or cached.
+ * Returns null if network resolution is still required.
+ */
+export function getSyncPlayableTrack(track: Track | null | undefined): Track | null {
+  if (!track) return null;
+  if (!isNeedsResolution(track)) {
+    return track;
+  }
+  const cache = getMatchCache();
+  const cachedMatch = cache[track.id];
+  if (cachedMatch && cachedMatch.streamUrl && !isNeedsResolution(cachedMatch)) {
+    return cachedMatch;
+  }
+  return null;
+}
+
+/**
+ * Synchronously gets a direct streamUrl if already resolved/cached.
+ */
+export function getDirectStreamUrl(track: Track | null | undefined): string | null {
+  const syncTrack = getSyncPlayableTrack(track);
+  return syncTrack?.streamUrl || null;
+}
+
+// Background preload element to warm DNS, TCP handshake, and buffer cache for upcoming tracks
+let preloadAudioEl: HTMLAudioElement | null = null;
+
+/**
+ * Preloads audio file into browser HTTP cache ahead of time.
+ */
+export function preloadTrackAudio(url: string | null | undefined): void {
+  if (!url || typeof window === 'undefined') return;
+  try {
+    if (!preloadAudioEl) {
+      preloadAudioEl = new Audio();
+      preloadAudioEl.preload = 'auto';
+      preloadAudioEl.volume = 0;
+      preloadAudioEl.muted = true;
+    }
+    if (preloadAudioEl.src !== url) {
+      preloadAudioEl.src = url;
+      preloadAudioEl.load();
+    }
+  } catch {
+    // Ignore preload errors on unsupported environments
+  }
+}
+
+/**
  * Resolves a track to its direct 320kbps audio twin from the primary JioSaavn catalog
  * if it originated from YouTube Music or iTunes discovery without direct full audio stream.
  */
 export async function resolvePlayable(track: Track): Promise<Track> {
-  const needsResolution =
-    track.source === 'youtube' ||
-    track.source === 'itunes' ||
-    !track.streamUrl ||
-    track.streamUrl.includes('audio-preview') ||
-    track.streamUrl.includes('youtube') ||
-    track.streamUrl.includes('preview.saavncdn.com') ||  // 30-sec clip domain — must resolve to full
-    track.streamUrl.includes('_96_p.mp4');               // low-quality preview suffix
-
-  // If track already has direct audio stream (from JioSaavn / direct CDN), return it
-  if (!needsResolution && track.streamUrl) {
+  // If track already has direct audio stream (from JioSaavn / direct CDN), return it immediately
+  if (!isNeedsResolution(track) && track.streamUrl) {
     return track;
   }
 
   const cache = getMatchCache();
   if (cache[track.id] !== undefined) {
     const cachedMatch = cache[track.id];
-    if (cachedMatch && cachedMatch.streamUrl) return cachedMatch;
+    if (cachedMatch && cachedMatch.streamUrl && !isNeedsResolution(cachedMatch)) {
+      return cachedMatch;
+    }
   }
 
   try {
@@ -79,7 +141,7 @@ export async function resolvePlayable(track: Track): Promise<Track> {
 
         // Find candidate with high confidence match
         const bestCandidate = results.find((candidate) => {
-          if (!candidate.streamUrl) return false;
+          if (!candidate.streamUrl || isNeedsResolution(candidate)) return false;
           const normCandTitle = normalize(candidate.title);
           const normCandArtist = normalize(candidate.artist);
 
@@ -91,8 +153,7 @@ export async function resolvePlayable(track: Track): Promise<Track> {
             normTargetArtist.split(' ').some((word) => word.length > 3 && normCandArtist.includes(word));
 
           return titleMatch || (titleMatch && artistMatch);
-        // Fallback: first result that actually has a full streamUrl (not a preview)
-        }) || results.find((r) => !!r.streamUrl && !r.streamUrl.includes('preview.saavncdn.com') && !r.streamUrl.includes('_96_p.mp4'));
+        }) || results.find((r) => !!r.streamUrl && !isNeedsResolution(r));
 
         if (bestCandidate && bestCandidate.streamUrl) {
           const resolved: Track = {
